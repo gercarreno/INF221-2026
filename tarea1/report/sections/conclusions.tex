@@ -1,0 +1,7 @@
+El análisis experimental revela que, si bien la notación asintótica es clave para predecir la escalabilidad, el rendimiento práctico está influenciado por factores que la teoría no captura en su totalidad. La elección del algoritmo óptimo depende de la mezcla entre la complejidad teórica, las características específicas de los datos y las limitaciones del entorno de ejecución, como la memoria disponible.
+
+En el ámbito del ordenamiento, la superioridad de implementaciones híbridas como \texttt{std::sort} evidencia el valor de combinar distintas estrategias para adaptarse dinámicamente a las condiciones de los datos. Esto subraya que las constantes ocultas y la naturaleza de las operaciones elementales tienen un impacto tangible en el rendimiento real.
+
+Por otro lado, la multiplicación de matrices ilustra un claro compromiso entre tiempo de ejecución y uso de memoria. Aunque Strassen confirma su ventaja teórica en matrices de gran tamaño, su mayor consumo de recursos lo convierte en una opción menos viable cuando la memoria es una limitante. Esto demuestra que un algoritmo teóricamente superior puede no ser la mejor elección si sus requerimientos exceden la capacidad del sistema.
+
+En síntesis, este estudio cierra la brecha entre el análisis teórico y el comportamiento empírico. La eficiencia real no es un atributo absoluto, sino una propiedad dependiente del contexto que proviene de la interacción entre la lógica del algoritmo, la arquitectura del hardware y la estructura de los datos.

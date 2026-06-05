@@ -1,0 +1,108 @@
+En esta sección analizaremos los resultados obtenidos de la ejecución de los algoritmos. Las gráficas presentadas fueron generadas automáticamente a partir de los datos recolectados, los cuales se adjuntan con este informe en los directorios \texttt{data/measurements/}.
+
+Para replicar la generación de datos y gráficos en otro entorno, se deben seguir los pasos especificados en el \texttt{README.md}:
+\subsection*{Algoritmos de Ordenamiento}
+
+Para el análisis de los algoritmos de ordenamiento, se presentan las gráficas que comparan el tiempo de ejecución en función del número de elementos para distintos tipos de datos de entrada.
+
+\subsubsection*{Tiempo de Ejecución vs. Cantidad de Elementos}
+
+La \autoref{fig:figura1} muestra el comportamiento de los algoritmos al ordenar arreglos con elementos en orden aleatorio. En ella se distinguen dos grupos principales: aquellos con complejidad promedio $\mathcal{O}(N \log N)$ (\texttt{std::sort}, \texttt{Merge Sort}, \texttt{Quick Sort})
+
+\begin{itemize}
+\item \textbf{\texttt{std::sort}}: Notamos que es algoritmo más rápido en general, especialmente para número grande de datos ($N > 1000$). A partir de $N = 100{,}000$, supera al resto. Este comportamiento se debe a su implementación basada en \textit{Introsort}, un algoritmo híbrido que combina la eficiencia de \texttt{Quick Sort}, la robustez de \texttt{Heap Sort} en el peor caso y una gran rapidez en particiones pequeñas \parencite{g4g2025introsort} y \parencite{swhostingCppSort2023}.
+
+\item \textbf{\texttt{Merge Sort} y \texttt{Quick Sort}}: Ambos algoritmos muestran un rendimiento constante, acorde con su complejidad promedio $\mathcal{O}(N \log N)$. \texttt{Quick Sort} presentó un desempeño ligeramente superior al de \texttt{Merge Sort}. Solo están diferenciados por una constante como factor. En general estos dos para ordenar grandes conjuntos de datos, son eficientes.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.41\textwidth]{../code/sorting/data/plots/tiempo_vs_n_aleatorio.pdf}
+\caption{Comparativa de tiempo de ejecución para algoritmos de ordenamiento con datos de entrada aleatorios. Se observa el escalamiento logarítmico de los algoritmos eficientes. \textit{Fuente:} \protect\path{sorting/data/plots/tiempo_vs_n_aleatorio.pdf}}
+\label{fig:figura1}
+\end{figure}
+
+\subsubsection*{Impacto del Orden de los Datos de Entrada}
+
+Las \autoref{fig:figura2} y \autoref{fig:figura3} muestran cómo el orden inicial de los datos afecta el rendimiento. Notamos que algoritmos como \texttt{Merge Sort}, \texttt{std::sort} y \texttt{Quick Sort} mantienen un comportamiento estable e independiente de la disposición inicial de los elementos.
+
+\subsection*{Datos Ascendentes}
+\begin{itemize}
+\item \textbf{\texttt{std::sort}, \texttt{Merge Sort} y \texttt{ Quick Sort (Random Pivot)}}:
+Los tres mantienen un rendimiento cercano a $\mathcal{O}(N\log N)$ aún con datos ya ordenados.
+\texttt{std::sort} suele ser ligeramente más rápido por su implementación basada en \emph{introsort}
+(\texttt{quicksort} + \texttt{heapsort}).
+\texttt{Quick Sort} con pivote aleatorio \textbf{no} entra en el peor caso en este escenario; la degradación a
+$\mathcal{O}(N^2)$ se da principalmente cuando estamos en presencia de un particionamiento desfavorable. Las pequeñas diferencias entre curvas responden a constantes de implementación y de memoria.
+\end{itemize}
+
+\subsection*{Datos Descendentes}
+\begin{itemize}
+\item \textbf{\texttt{std::sort}, \texttt{Merge Sort} y \texttt{Quick Sort}}: Se mantienen como los algoritmos más estables. Independientemente del orden inicial, ambos conservan su eficiencia $\mathcal{O}(N \log N)$, con \texttt{std::sort} destacando ligeramente en velocidad gracias a las optimizaciones en su diseño\parencite{beyondfireship2023sorting}.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{../code/sorting/data/plots/tiempo_vs_n_ascendente.pdf}
+  \caption{Rendimiento con datos pre-ordenados ascendentemente. \textit{Fuente:} \protect\path{sorting/data/plots/tiempo_vs_n_ascendente.pdf}}
+  \label{fig:figura2}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{../code/sorting/data/plots/tiempo_vs_n_descendente.pdf}
+  \caption{Rendimiento con datos pre-ordenados descendentemente. \textit{Fuente:} \protect\path{sorting/data/plots/tiempo_vs_n_descendente.pdf}}
+  \label{fig:figura3}
+\end{minipage}
+\end{figure}
+
+\subsubsection*{Uso de Memoria}
+
+La \autoref{fig:figura4} muestra el consumo de memoria para datos aleatorios. De hecho en primer lugar notamos, para tamaños de entrada pequeños ($N < 1000$), todos los algoritmos presentan un consumo prácticamente idéntico y constante, cercano a los $3600\,\text{KB}$. Esto sugiere que el gasto de memoria puede venir por la sobrecarga inherente al entorno de ejecución y a las estructuras utilizadas por el programa.
+
+En contraste, para tamaños de entrada grandes ($N > 1000$), las diferencias entre algoritmos se vuelven significativas, ya que el costo de memoria comienza a reflejar la complejidad espacial de cada implementación.
+
+\begin{itemize}
+\item \texttt{Quick Sort}: Se ubica como el algoritmo más eficiente en términos de memoria de este grupo. Si bien implica un costo logarítmico $\mathcal{O}(\log N)$ debido a la recursión, mantiene un perfil de memoria bajo.
+\item \texttt{Merge Sort}: Exhibe un consumo de memoria intermedio. Dado que no es un algoritmo \textit{in-place}, su estrategia de \textit{divide y vencerás} requiere la creación de arreglos auxiliares para fusionar las subsecuencias, lo que se traduce en una complejidad espacial de $\mathcal{O}(N)$. En consecuencia, su consumo crece de manera proporcional al tamaño de los datos.
+\item \texttt{std::sort}: A pesar de ser una implementación optimizada y rápida en términos de tiempo, presenta un consumo de memoria relativamente alto. Esto se explica por la gestión interna de los contenedores de la STL y por optimizaciones, a costa de un mayor uso de memoria\parencite{youtubeIntrosort2021}.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{../code/sorting/data/plots/memoria_vs_n_comparativo.pdf}
+\caption{Comparativa del uso de memoria pico para datos aleatorios, mostrando la diferencia entre algoritmos in-place y aquellos que requieren memoria auxiliar. \textit{Fuente:} \protect\path{sorting/data/plots/memoria_vs_n_comparativo.pdf}}
+\label{fig:figura4}
+\end{figure}
+
+\subsection*{Multiplicación de Matrices}
+
+Para la multiplicación de matrices, el análisis se centra en la comparación directa entre el algoritmo \texttt{Naive} y el de \texttt{Strassen}.
+
+\subsubsection*{Tiempo de Ejecución y Memoria vs. Dimensión de la Matriz}
+
+La \autoref{fig:figura5} muestra unos datos un tanto peculiar ya que en la literatura nos dice \texttt{Strassen} deberia ser más rapido que el \texttt{Naive} pero notamos que la ventaja teórica del algoritmo de Strassen no es aplicable a nivel práctico\parencite{cormen2009introduction}. En la gráfica de tiempo de ejecución, se observa que para la gran mayoria de valores ($N$), el algoritmo \texttt{Naive} es más rápido. Una de las razones por las que ocurre esto, es debido a la implementación que fue ocupada de \texttt{Strassen} para este informe \parencite{geeksforgeeks2025strassen}, adentro con más detalle en el mismo código \texttt{strassen.cpp}. Sin embargo, a medida que $N$ aumenta, la complejidad del Strassen ($O(n^{2.81})$) se ve totalmente opacada por el \texttt{Naive}, superando con creces al \texttt{Strassen} ($O(n^3)$) para matrices de $256 \times 256$ y $1024 \times 1024$.
+
+En contraste con el tiempo de ejecución, la gráfica de uso de memoria revela que la implementación de Strassen, sin optimización de memoria, requiere mucha más memoria que el algoritmo Naive. Es clave entender que toda esta asignación adicional se debe a la copia recursiva de las matrices de entrada. Se origina por la necesidad de asignar memoria para las matrices temporales que almacenan los resultados de las 7 multiplicaciones y las 10 sumas/restas intermedias del algoritmo, incluso para submatrices lo suficientemente pequeñas.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{../code/matrix_multiplication/data/plots/tiempo_vs_dimension.pdf}
+  \caption{Tiempo de ejecución vs. dimensión. Se aprecia el punto de inflexión donde Strassen se vuelve más eficiente que Naive. \textit{Fuente:} \protect\path{matrix_multiplication/data/plots/tiempo_vs_dimension.pdf}}
+  \label{fig:figura5}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{../code/matrix_multiplication/data/plots/memoria_vs_dimension.pdf}
+  \caption{Uso de memoria vs. dimensión. Se observa el alto costo en memoria del algoritmo de Strassen debido a su naturaleza recursiva. \textit{Fuente:} \protect\path{matrix_multiplication/data/plots/memoria_vs_dimension.pdf}}
+  \label{fig:figura6}
+\end{minipage}
+\end{figure}
+
+\subsubsection*{Comparativa para $N = 1024$}
+
+Las \autoref{fig:figura6} refuerza las conclusiones anteriores, mostrando una comparación directa para la dimensión más grande probada. El algoritmo \texttt{Strassen} es más del doble de lento en comparación al \texttt{Naive}, pero este utiliza más del triple de memoria. Esta visualización resume de manera clara la inefectividad que tiene el algoritmo de \texttt{Strassen}.

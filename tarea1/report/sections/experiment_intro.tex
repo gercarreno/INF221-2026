@@ -1,0 +1,14 @@
+Para garantizar la reproducción de los resultados, los experimentos se realizaron en un sistema con las siguientes especificaciones:
+
+\subsection*{Especificaciones}
+\begin{itemize}
+  \item \textbf{Equipo:} \texttt{LENOVO ThinkPad X13 Gen 3}.
+  \item \textbf{CPU:} \texttt{Intel Core i7-1265U (4.8 GHz)}.
+  \item \textbf{RAM:} \texttt{16 GB}.
+  \item \textbf{Disco:} \texttt{SSD NVMe 512 GB}.
+  \item \textbf{SO:} \texttt{Fedora Linux 43 (Workstation Edition)} con \texttt{Linux 6.19.10-200.fc43.x86\_64}.
+  \item \textbf{Compilador:} \texttt{g++ 11.4.0} con flags \texttt{-std=c++17 -O2 -g -Wall -Wextra -pedantic}.
+\end{itemize}
+
+La compilación y ejecución se automatizó con \texttt{Makefile}. Los tiempos se midieron en nanosegundos $(ns)$ con \texttt{<chrono>} \parencite{cppreference_chrono} y el pico de memoria en kilobytes (KB) mediante \texttt{getrusage} en Linux. \parencite{linux_getrusage}
+
