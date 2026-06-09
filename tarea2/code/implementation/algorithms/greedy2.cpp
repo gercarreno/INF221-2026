@@ -5,10 +5,11 @@ using namespace std;
 using ll = long long;
 
 //ll satisfaccion_global=0;
-ll anime_max(int n, vector<Anime>& animes, int M, int E){
+ll anime_max(vector<Anime>& animes, int M, int E){
     sort(animes.begin(), animes.end(), [](const Anime& a, const Anime& b) {
         return a.bono > b.bono;
     });
+    int n= animes.size();
     ll satisfaccion_total=0;
     int energia_restante=E;
     int tiempo_restante=M;
@@ -17,7 +18,7 @@ ll anime_max(int n, vector<Anime>& animes, int M, int E){
         //recorrer cada capitulo del anime hasta verlo completo y ver si M y E me alcanzan y lo agrego a la satisfaccion total + bono.
         int costo_tiempo= calcular_tiempo(animes[k], total_caps);
         int costo_energia= calcular_energia(animes[k], total_caps);
-        int satisfaccion_k = calcular_satisfaccion(animes[k], total_caps);
+        ll satisfaccion_k = calcular_satisfaccion(animes[k], total_caps);
         if(costo_energia<=energia_restante && costo_tiempo<= tiempo_restante){
             energia_restante-=costo_energia;
             tiempo_restante-=costo_tiempo;

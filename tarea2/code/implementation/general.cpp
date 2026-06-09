@@ -22,6 +22,10 @@ int main(){
     backtracking(0, animes, M, E, 0);
     cout << satisfaccion_global << endl;
 
+
+    cout << anime_greedy(animes, M,E) << endl;
+    cout << anime_max(animes, M, E) << endl;
+
     /* Check that vector stores the right information;
     cout << n << " " << M << " " << E << endl;
     for (int i=0; i<n; i++){
