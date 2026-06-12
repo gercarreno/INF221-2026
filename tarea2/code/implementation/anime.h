@@ -28,6 +28,7 @@ extern ll satisfaccion_global;
 
 ll anime_greedy(vector<Anime>& animes, int M, int E);
 ll anime_max(vector<Anime>& animes, int M, int E);
+ll knapsack_anime(vector <Anime>& animes, int M, int E);
 
 
 int calcular_tiempo(const Anime& anime, int k);
