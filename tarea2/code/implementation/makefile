@@ -1,30 +1,41 @@
-# Compilador
+# compilador
 CXX = g++
-CXXFLAGS = -std=c++20 -O2 -Wall -Wextra -g
+CXXFLAGS = -std=c++20 -O2 -Wall -Wextra -g -MMD -MP
 TARGET = animaraton
 
-# Encuentra automáticamente todos los archivos .cpp en el directorio
-# (Asume que general.cpp, dynamic-programming.cpp, etc., están aquí)
+# archivos .cpp en el dir
 SRCS = $(wildcard *.cpp) $(wildcard */*.cpp)
 
-# Convierte la lista de .cpp en una lista de archivos objeto .o
+# .cpp en una lista de archivos objeto .o
 OBJS = $(SRCS:.cpp=.o)
+DEPS = $(OBJS:.o=.d)
 
-# Regla principal: compila todo y genera el ejecutable
+# compila y genera el ejecutable
 all: $(TARGET)
 
-# Regla para enlazar los objetos y crear el ejecutable
+#enlazar los objetos y crear el ejecutable
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
-# Regla genérica para compilar cualquier .cpp en un .o
+# compilar cualquier .cpp en un .o
 %.o: %.cpp
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+-include $(DEPS)
+
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(DEPS) $(TARGET)
+clean-data:
+	rm -f ./data/inputs/* ./data/outputs/* ./data/measurements/*
 
-# Regla para limpiar y volver a compilar todo desde cero
-# Ejecutar usando: make rebuild
+#número de archivos
+N ?= 100
+
+data:
+	python3 ./scripts/testcases_generator.py $(N)
+plot:
+	python3 ./scripts/plot_generator.py
+
+# make rebuild
 rebuild: clean all
-
-.PHONY: all clean rebuild
+.PHONY: all clean rebuild clean-data data plot

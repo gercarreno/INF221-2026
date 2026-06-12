@@ -26,9 +26,10 @@ ll anime_greedy(vector<Anime>& animes, int M, int E){
         return a.ratio > b.ratio;
     });
     vector<bool> anime_seleccionado(n_animes, false);
+    int size_anime=anime_seleccionado.size();
     int energia_restante=E;
     int tiempo_restante=M;
-    for (int b=0; b<anime.size(); b++){
+    for (int b=0; b<size_anime; b++){
         if(!anime_seleccionado[anime[b].id_anime]){
             if(tiempo_restante>= anime[b].tiempo_k && energia_restante>= anime[b].energia_k){
                 satisfaccion_actual+= anime[b].satisfaccion_k;
