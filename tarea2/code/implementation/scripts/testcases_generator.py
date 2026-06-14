@@ -13,10 +13,7 @@ def random_anime_name(length=10):
     chars = string.ascii_lowercase + string.digits + "_"
     return "".join(random.choices(chars, k=length))
 
-
-def generate_test_case(filename):
-    n = random.randint(1, 200)
-
+def generate_test_case(filename, n):
     # Asegurar que Q <= 700, q_i <= 30 y que cada anime tenga al menos 1 capítulo
     q_list = []
     Q_remaining = 700
@@ -55,23 +52,40 @@ def generate_test_case(filename):
 
 
 def main():
-    # Permite especificar la cantidad de casos de prueba por consola (por defecto 10)
-    num_cases = 10
-    if len(sys.argv) > 1:
-        try:
-            num_cases = int(sys.argv[1])
-        except ValueError:
-            print("Número inválido")
-            sys.exit(1)
+    # Tipos de casos
+    # n ∈ {3,5,8}       casos pequeños
+    # n ∈ {20,40,80}    casos medianos
+    # n ∈ {100,150,200} casos grandes
+    SMALL_NS = [3, 5, 8]
+    MEDIUM_NS = [20, 40, 80]
+    LARGE_NS = [100, 150, 200]
+
+    cases_per_n = 3
+
+    # --small | --medium | --large
+    args = sys.argv[1:]
+    if "--small" in args:
+        ns_to_generate = SMALL_NS
+    elif "--medium" in args:
+        ns_to_generate = MEDIUM_NS
+    elif "--large" in args:
+        ns_to_generate = LARGE_NS
+    else:
+        ns_to_generate = SMALL_NS + MEDIUM_NS + LARGE_NS  # completa por defecto
 
     output_dir = "./data/inputs/"
     os.makedirs(output_dir, exist_ok=True)
 
-    print(f"Generando {num_cases} casos de prueba en '{output_dir}'...")
+    total = 0
+    for n in ns_to_generate:
+        for i in range(1, cases_per_n + 1):
+            # testcases_{n}_{i}.txt
+            filename = os.path.join(output_dir, f"testcases_{n}_{i}.txt")
+            generate_test_case(filename, n)
+            print(f"  Generado: testcases_{n}_{i}.txt")
+            total += 1
 
-    for i in range(1, num_cases + 1):
-        filename = os.path.join(output_dir, f"input_{i:02d}.txt")
-        generate_test_case(filename)
+    print(f"\n{total} casos generados en '{output_dir}'.")
 
 
 if __name__ == "__main__":

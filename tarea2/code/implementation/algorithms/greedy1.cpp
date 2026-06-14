@@ -26,7 +26,7 @@ ll anime_greedy(vector<Anime>& animes, int M, int E){
         return a.ratio > b.ratio;
     });
     vector<bool> anime_seleccionado(n_animes, false);
-    int size_anime=anime_seleccionado.size();
+    int size_anime = anime.size();
     int energia_restante=E;
     int tiempo_restante=M;
     for (int b=0; b<size_anime; b++){

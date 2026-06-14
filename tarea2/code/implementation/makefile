@@ -32,7 +32,7 @@ clean-data:
 N ?= 100
 
 data:
-	python3 ./scripts/testcases_generator.py $(N)
+	python3 ./scripts/testcases_generator.py
 plot:
 	python3 ./scripts/plot_generator.py
 
