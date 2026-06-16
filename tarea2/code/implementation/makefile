@@ -35,7 +35,9 @@ data:
 	python3 ./scripts/testcases_generator.py
 plot:
 	python3 ./scripts/plot_generator.py
+run:
+	./animaraton
 
 # make rebuild
-rebuild: clean all
-.PHONY: all clean rebuild clean-data data plot
+rebuild: clean clean-data data all run
+.PHONY: all clean rebuild clean-data data plot run

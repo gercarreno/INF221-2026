@@ -2,12 +2,26 @@
 #include <chrono>
 #include <sys/resource.h>
 #include "anime.h"
+#include <cstdlib>
 using namespace std;
 
-double get_memory_mb() {
-    struct rusage r_usage;
-    getrusage(RUSAGE_SELF, &r_usage);
-    return r_usage.ru_maxrss / 1024.0;
+size_t current_allocated_memory = 0;
+size_t peak_allocated_memory = 0;
+
+void* operator new(size_t size) {
+    current_allocated_memory += size;
+    if (current_allocated_memory > peak_allocated_memory) {
+        peak_allocated_memory = current_allocated_memory;
+    }
+    return std::malloc(size);
+}
+void operator delete(void* memory, size_t size) noexcept {
+    current_allocated_memory -= size;
+    std::free(memory);
+}
+
+void operator delete(void* memory) noexcept {
+    std::free(memory);
 }
 
 int main() {
@@ -17,7 +31,7 @@ int main() {
 
     //archivo csv
     ofstream f_csv("./data/measurements/measurements.csv");
-    f_csv << "id_archivo,n_animes,total_capitulos,minutos_m,energia_e,algoritmo,tiempo_ms,memoria_mb,satisfaccion\n";
+    f_csv << "id_archivo,n_animes,total_capitulos,minutos_m,energia_e,algoritmo,tiempo_ns,memoria_mb,satisfaccion\n";
 
     // Iteramos sobre los posibles tamaños y el número de caso (1 al 3)
     for (int n_val : ns) {
@@ -58,12 +72,12 @@ int main() {
 
             if (n <= 25) {
                 satisfaccion_global = 0;
-
+                peak_allocated_memory = current_allocated_memory;
                 start = chrono::high_resolution_clock::now();
                 backtracking(0, animes, M, E, 0);
                 stop = chrono::high_resolution_clock::now();
-                memoria = get_memory_mb();
-                auto duration_bf = chrono::duration_cast<chrono::milliseconds>(stop - start).count();
+                memoria =(peak_allocated_memory - current_allocated_memory) / (1024.0 * 1024.0);
+                auto duration_bf = chrono::duration_cast<chrono::nanoseconds>(stop - start).count();
 
                 fout_bf << satisfaccion_global << endl;
                 f_csv << base_name << "," << n << "," << total_capitulos << "," << M << "," << E << ",bf," << duration_bf << "," << memoria << "," << satisfaccion_global << "\n";
@@ -76,40 +90,41 @@ int main() {
             // anime_greedy
             ofstream fout_gh1(base_out + "_gh1.txt");
 
+            peak_allocated_memory = current_allocated_memory;
             start = chrono::high_resolution_clock::now();
             long long res_gh1 = anime_greedy(animes, M, E);
             stop = chrono::high_resolution_clock::now();
-            memoria = get_memory_mb();
-            auto duration_gh1 = chrono::duration_cast<chrono::milliseconds>(stop - start).count();
+            double memoria_gh1 = (peak_allocated_memory - current_allocated_memory) / (1024.0 * 1024.0);
+            auto duration_gh1 = chrono::duration_cast<chrono::nanoseconds>(stop - start).count();
 
             fout_gh1 << res_gh1 << endl;
-            f_csv << base_name << "," << n << "," << total_capitulos << "," << M << "," << E << ",gh1," << duration_gh1 << "," << memoria << "," << res_gh1 << "\n";
+            f_csv << base_name << "," << n << "," << total_capitulos << "," << M << "," << E << ",gh1," << duration_gh1 << "," << memoria_gh1 << "," << res_gh1 << "\n";
             fout_gh1.close();
 
             // anime_max
             ofstream fout_gh2(base_out + "_gh2.txt");
-
+            peak_allocated_memory = current_allocated_memory;
             start = chrono::high_resolution_clock::now();
             long long res_gh2 = anime_max(animes, M, E);
             stop = chrono::high_resolution_clock::now();
-            memoria = get_memory_mb();
-            auto duration_gh2 = chrono::duration_cast<chrono::milliseconds>(stop - start).count();
+            double memoria_gh2 = (peak_allocated_memory - current_allocated_memory) / (1024.0 * 1024.0);
+            auto duration_gh2 = chrono::duration_cast<chrono::nanoseconds>(stop - start).count();
 
             fout_gh2 << res_gh2 << endl;
-            f_csv << base_name << "," << n << "," << total_capitulos << "," << M << "," << E << ",gh2," << duration_gh2 << "," << memoria << "," << res_gh2 << "\n";
+            f_csv << base_name << "," << n << "," << total_capitulos << "," << M << "," << E << ",gh2," << duration_gh2 << "," << memoria_gh2 << "," << res_gh2 << "\n";
             fout_gh2.close();
 
             // knapsack_anime
             ofstream fout_dp(base_out + "_dp.txt");
-
+            peak_allocated_memory = current_allocated_memory;
             start = chrono::high_resolution_clock::now();
             long long res_dp = knapsack_anime(animes, M, E);
             stop = chrono::high_resolution_clock::now();
-            memoria = get_memory_mb();
-            auto duration_dp = chrono::duration_cast<chrono::milliseconds>(stop - start).count();
+            double memoria_dp =(peak_allocated_memory - current_allocated_memory) / (1024.0 * 1024.0);
+            auto duration_dp = chrono::duration_cast<chrono::nanoseconds>(stop - start).count();
 
             fout_dp << res_dp << endl;
-            f_csv << base_name << "," << n << "," << total_capitulos << "," << M << "," << E << ",dp," << duration_dp << "," << memoria << "," << res_dp << "\n";
+            f_csv << base_name << "," << n << "," << total_capitulos << "," << M << "," << E << ",dp," << duration_dp << "," << memoria_dp << "," << res_dp << "\n";
             fout_dp.close();
 
             cout << base_name << ".txt w/ (_bf, _gh1, _gh2, _dp)" << endl;
