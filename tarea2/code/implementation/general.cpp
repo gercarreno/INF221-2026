@@ -26,7 +26,7 @@ void operator delete(void* memory) noexcept {
 
 int main() {
     vector<int> ns = {3, 5, 8, 20, 40, 80, 100, 150, 200};
-    int cases_per_n = 3;
+    int cases_per_n = 3; //cambiar en caso de querer más casos.
     int procesados = 0;
 
     //archivo csv

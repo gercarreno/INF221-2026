@@ -1,5 +1,16 @@
-\begin{mdframed}
-    \textbf{La extensión máxima para esta sección es de media página.}
-\end{mdframed}
+Los experimentos se realizaron en un sistema con las siguientes especificaciones:
 
-Especifique el hardware y software utilizado para realizar los experimentos (por ejemplo, procesador, memoria RAM, sistema operativo, compilador y versión). Incluya una mención breve de los datasets utilizados, los cuales son los descritos en el enunciado de la tarea.
+\subsection*{Especificaciones}
+\begin{itemize}
+  \item \textbf{Equipo:} \texttt{LENOVO ThinkPad X13 Gen 3}.
+  \item \textbf{CPU:} \texttt{Intel Core i7-1265U (4.8 GHz)}.
+  \item \textbf{RAM:} \texttt{16 GB}.
+  \item \textbf{Disco:} \texttt{SSD NVMe 512 GB}.
+  \item \textbf{SO:} \texttt{Ubuntu 26.04 (GNOME Edition)} con \texttt{Linux 7.0.0-22-generic}.
+  \item \textbf{Compilador:} \texttt{g++ 15.2.0} con flags \texttt{-std=c++20 -O2 -g -Wall -Wextra}.
+\end{itemize}
+
+La compilación y ejecución está automatizada con \texttt{Makefile}. Los tiempos se midieron en nanosegundos $(ns)$ con \texttt{<chrono>} \parencite{cppreference_chrono} y uso de memoria en kilobytes (KB) mediante el pico máximo de memoria heap asignada por cada algoritmo. \parencite{}
+
+
+%https://stackoverflow.com/questions/49790824/keeping-track-of-used-memory-with-overloaded-new-and-delete-operator

@@ -20,7 +20,6 @@ void backtracking(int anime_i, vector<Anime>& animes, int M, int E, ll satisfacc
         if(tiempo_k<= M && energia_k<=E){
             backtracking(anime_i+1, animes, M-tiempo_k, E-energia_k, satisfaccion_actual+satisfaccion_k);
         }
-
     }
-
 }
+ 

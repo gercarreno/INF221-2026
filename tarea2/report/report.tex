@@ -1,7 +1,5 @@
 \documentclass[11pt,spanish]{article} % Tipo y tamaño de letra del documento.
-
 \input{preamble.tex}
-
 \input{author.tex}
 
 \headheight=14pt
@@ -20,8 +18,6 @@
 \boolfalse{programs}
 \chead{REPORTE TAREA \tnum~}
 
-
-
 \title{
   \huge
   \textbf{REPORTE TAREA \tnum~ \\ ALGORITMOS Y COMPLEJIDAD} \\[1ex]
@@ -34,23 +30,37 @@
   \today\\
   \currenttime
 }
-
-
-
-
 \begin{document}
 \maketitle
+\AddToShipoutPictureBG*{
+    \AtPageUpperLeft{
+        \put(\dimexpr\paperwidth-6cm\relax,-9.5cm){ %X, Y
+            \tikz[baseline]{\node[rotate=15]{\includegraphics[width=3.5cm]{../code/easter-egg.png}};}
+        }
+    }
+}
 \thispagestyle{fancy}
 \vspace{-1.0\baselineskip}
-
-\section{Entorno experimental}
+\section{Introducción}
+\input{sections/introduction}
+\newpage
+\section{Entorno}
 \input{sections/experiment_intro}
-
+\subsection{Dataset}
+\input{sections/experiment_dataset}
+\newpage
 \section{Resultados y Análisis}
 \input{sections/experiment_results}
 
 \section{Conclusiones}
 \input{sections/conclusions}
+
+\newpage
+\appendix
+
+
+\section{Apéndice 1}
+\input{sections/appendix1}
 
 \printbibliography
 

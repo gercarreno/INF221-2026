@@ -1,15 +1,162 @@
-\begin{mdframed}
-    \textbf{La extensión máxima para esta sección es de 4 páginas.} Si utiliza menos páginas y explica bien sus resultados, es preferible.
-\end{mdframed}
+Antes de profundizar en los resultados experimentales, a continuación se presenta cómo fueron construidos los algoritmos, detallando su lógica detrás.
+\subsubsection*{Fuerza bruta}
 
-Presente sus resultados mediante \textbf{tablas y gráficos}. Cada tabla o gráfico debe estar referenciado en el texto, con una breve descripción de lo que se observa y por qué es relevante.
+La fuerza bruta explora el espacio de soluciones de forma exhaustiva mediante
+\textit{backtracking}: para cada anime se prueban todas las cantidades posibles
+de capítulos a ver (de $0$ a $n\_cap_i$) y se conserva la combinación de mayor
+satisfacción que respete las restricciones de tiempo $M$ y energía $E$.
 
-\textbf{Es necesario automatizar la generación de las gráficas}, ya que es imprescindible que se pueda confirmar que las visualizaciones presentadas son producto de los datos generados por sus algoritmos.
+\paragraph{Diseño del Algoritmo}
 
-Escoja las gráficas más representativas y que muestren de manera clara los resultados obtenidos. Esta elección es parte de lo que se evaluará en la sección de presentación de resultados.
+El algoritmo recorre los animes en orden.  En cada llamada recursiva se itera
+sobre los valores $k \in \{0, 1, \ldots, n\_cap_i\}$ y, si el costo en tiempo
+y energía de ver $k$ capítulos del anime $i$ no supera los recursos restantes,
+se realiza la llamada recursiva con los recursos reducidos y la satisfacción
+acumulada.  Cuando se han procesado todos los animes ($anime\_i = n$) se
+actualiza la satisfacción global si la actual es mayor.
+
+\paragraph{Complejidad}
+
+En el peor caso, para cada anime $i$ se exploran $n\_cap_i + 1$ opciones.
+Si todos los animes tuvieran $C$ capítulos, el árbol de recursión tendría
+$(C+1)^n$ hojas, lo que da una complejidad temporal de
+$\mathcal{O}\!\left(C^n\right)$, exponencial en $n$.
+El espacio auxiliar es $\mathcal{O}(n)$.
 
 
+\vspace{1cm}
+Los algoritmos greedy construyen la solución paso a paso, tomando en cada
+iteración el mejor candidato en ese momento, sin considerar decisiones pasadas.
+Para el problema se implementaron dos heurísticas greedy con diferentes lógicas.
 
-\begin{mdframed}
-    Recuerde que es imprescindible que se pueda replicar la generación de las gráficas, por lo que usted debe referir a las figuras generadas en `code/implementation/data/plots/`.
-\end{mdframed}
+\subsubsection*{Greedy ratio}
+Esta heurística evalúa cada par $(anime_i,\, k)$ — es decir, ver exactamente
+$k$ capítulos del anime $i$ — y le asigna un \emph{razón de eficiencia}:
+
+\[
+    r(i,k) \;=\; \frac{s(i,k)}{\dfrac{t(i,k)}{M} + \dfrac{e(i,k)}{E}}
+\]
+
+donde $s$, $t$ y $e$ son la satisfacción, el tiempo y la energía respectivos.
+El denominador normaliza ambos recursos para que contribuyan proporcionalmente a las restricciones establecidas.
+Todos los pares se ordenan de mayor a menor ratio; luego se recorren en ese
+orden y se selecciona el primero válido para cada anime (sin repetir la elección
+de un mismo anime).
+
+\paragraph{Complejidad}
+
+La generación de pares es $\mathcal{O}\!\left(\sum_{i=1}^n n\_cap_i\right)$.
+Denotando $P = \sum_i n\_cap_i$, el ordenamiento cuesta $\mathcal{O}(P \log P)$
+y el recorrido final es $\mathcal{O}(P)$.  En total, la complejidad temporal
+es $\mathcal{O}(P \log P)$ y el espacio es $\mathcal{O}(P)$.
+
+\subsubsection*{Greedy max}
+Esta heurística prioriza los animes con mayor satisfacción total (al ver todos
+sus capítulos).  Los animes se ordenan de forma descendente por
+$s(i, n\_cap_i)$ y luego se intenta incorporar cada uno completo si los
+recursos restantes lo permiten.
+
+\paragraph{Complejidad}
+
+El ordenamiento cuesta $\mathcal{O}(n \log n)$ y el recorrido es
+$\mathcal{O}(n)$, por lo que la complejidad total es
+$\mathcal{O}(n \log n)$ en tiempo y $\mathcal{O}(n)$ en espacio (para la copia
+del arreglo).
+
+\paragraph{Limitaciones de las Heurísticas Greedy}
+
+Ninguna de las dos heurísticas garantiza la solución óptima.  \textit{Greedy
+ratio} puede descartar una combinación de menor ratio individual que, en
+conjunto, aproveche mejor los recursos.  \textit{Greedy max} ignora por
+completo la eficiencia en recursos: un anime de alta satisfacción pero costo
+elevado puede bloquear varias alternativas de menor satisfacción pero mayor
+rendimiento combinado.  En ambos casos, la naturaleza local de la decisión es un impedimento que produce soluciones subóptimas.
+
+\vspace{1cm}
+La programación dinámica resuelve el problema de forma exacta
+aprovechando su \emph{subestructura óptima}: la solución óptima para los
+primeros $i$ animes con $m$ minutos y $e$ unidades de energía disponibles
+puede construirse a partir de soluciones óptimas de subproblemas más pequeños.
+
+\subsubsection*{Subestructura Óptima}
+Sea $dp[i][m][e]$ la satisfacción máxima alcanzable considerando únicamente
+los primeros $i$ animes, con a lo sumo $m$ minutos y $e$ unidades de energía.
+Para el anime $i$ se puede elegir ver $k \in \{0, 1, \ldots, n\_cap_i\}$
+capítulos (ver $0$ capítulos equivale a no seleccionarlo).  La recurrencia es:
+
+\[
+    dp[i][m][e] \;=\; \max_{k=0}^{n\_cap_i}
+    \Bigl\{
+        dp[i-1]\bigl[m - t(i,k)\bigr]\bigl[e - e(i,k)\bigr]
+        + s(i,k)
+        \;\Big|\;
+        t(i,k) \leq m,\; e(i,k) \leq e
+    \Bigr\}
+\]
+
+con los casos base $dp[0][m][e] = 0$ para todo $m, e$ (sin animes disponibles,
+la satisfacción es cero).
+
+\subsubsection*{Complejidad}
+La tabla tiene $(n+1)(M+1)(E+1)$ celdas.  Cada celda $(i,m,e)$ se calcula
+iterando sobre los $n\_cap_i$ valores de $k$.  Denotando
+$C = \max_i n\_cap_i$, el costo total es:
+
+\[
+    \mathcal{O}\!\Bigl(n \cdot M \cdot E \cdot C\Bigr)
+\]
+
+en tiempo, y $\mathcal{O}(n \cdot M \cdot E)$ en espacio para almacenar la
+tabla tridimensional.  Dado que $M$ y $E$ pueden ser grandes, esta complejidad
+es \emph{pseudopolinomial}: polinomial en los valores enteros pero exponencial en binario. Para instancias con $M$ y $E$ acotados, este enfoque produce la solución óptima de forma eficiente, a diferencia de la fuerza bruta \ref{fig:complejidad_empírica}.
+
+\vspace{1cm}
+Los resultados de la fase experimental se analizan a continuación.
+
+\subsubsection*{Análisis de Rendimiento Computacional}
+
+Los gráficos nos muestran que la forma experimental no está tan alejada del marco teórico sobre la complejidad de cada algoritmo. La Figura \ref{fig:tiempo_vs_n} y \ref{fig:tiempo_escalamiento} ilustra la drástica diferencia entre los enfoques. En una escala logarítmica, se observa cómo el tiempo de ejecución del algoritmo de fuerza bruta crece de manera exponencial, volviéndose poco eficiente para valores de $n$ superiores a 25. En contraste, los demás algoritmos muestran un crecimiento polinómico, lo que los hace viables para entradas considerablemente más grandes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../code/implementation/data/plots/tiempo_algoritmos.png}
+    \caption{Comparación del tiempo de ejecución (en nanosegundos, escala logarítmica) en función del tamaño de la entrada $n$. Se evidencia el crecimiento exponencial de la fuerza bruta frente al crecimiento polinómico de los otros tres algoritmos.}
+    \label{fig:tiempo_vs_n}
+\end{figure}
+
+\paragraph{Uso de memoria}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../code/implementation/data/plots/memoria_algoritmos.png}
+    \caption{Comparación del uso de memoria (en KB) en función del número de animes $n$.}
+    \label{fig:memoria_algoritmos}
+\end{figure}
+
+La figura \ref{fig:memoria_algoritmos} muestra los resultados experimentales del uso de memoria en función de $n$. El enfoque de programación dinámica es el más costoso, siguiendo una curva superlineal. La razón proviene del enfoque \textit{bottom-up}, haciendo uso de la tabulación para almacenar resultados previamente calculados.  
+Los algoritmos de \textit{greedy ratio} y \textit{greedy max} ambos presentan un rápido crecimiento para pequeños valores de $n$, la diferencia radica en la estabilidad que alcanzan a largo plazo. \textit{Greedy ratio} se estabiliza alrededor de $n=40$ esto indica que no necesita mantener una estructura fija dependiendo del valor de $n$, mientras \textit{greedy max} presenta una curva lineal, indicando que si existe dependencia entre la estructura de almacenamiento y el valor de $n$. Para fuerza bruta, como mencionamos anteriormente, la instancia de ejecución fue acotada para valores $n\leq 25$ y el uso de memoria se observa constante a lo largo de este intervalo.
+
+En general, los algoritmos greedy resultan considerablemente más eficientes en memoria que la programación dinámica, lo que los hace preferibles cuando el
+$n$ es grande.
+
+\subsubsection*{Calidad de Solución}
+
+Si bien la eficiencia es punto importante, la calidad de la solución es el objetivo. Al comparar la satisfacción total obtenida por las heurísticas greedy con la solución óptima usando programación dinámica (ver Figuras \ref{fig:boxplot_greedy} y \ref{fig:calidad_greedy}, se observa que la heurística \textit{greedy ratio} de forma consistente encuentra soluciones de mayor calidad que \textit{greedy max}, donde en muchos casos logra dar con el óptimo. Con esto queda en evidencia que la estrategia de \textit{greedy max} tiene una lógica ingenua y con frecuencia queda atrapada en óptimos locales de baja calidad.
+
+\vspace{1cm}
+La relación entre el tiempo de ejecución y la calidad de la solución se observan de manera clara en la Figura \ref{fig:tradeoff}. El gráfico nos muestra el costo computacional (tiempo de ejecución) y la satisfacción obtenida (calidad de la solución como porcentaje del óptimo).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{../code/implementation/data/plots/tradeoff_calidad_tiempo.png}
+    \caption{Trade-off entre eficiencia y calidad. La calidad de la solución expresada como porcentaje respecto al óptimo de DP.}
+    \label{fig:tradeoff}
+\end{figure}
+
+De la Figura \ref{fig:tradeoff} se puede concluir qué:
+\begin{itemize}
+    \item \textbf{Programación Dinámica (DP)}: Garantiza la solución óptima (100\% de calidad) pero con el mayor tiempo de ejecución entre la báteria de algoritmos. Es la elección correcta cuando la optimalidad es un requisito estricto.
+    \item \textbf{Greedy ratio}: Ofrece el mejor equilibrio, con una calidad muy cercana al óptimo (alrededor del 90-100\%) pero con órdenes de magnitud menor que DP respecto del tiempo de ejecución. Si nuestro problema nos permite tolerar una pequeña desviación respecto del óptimo, esta heuristica es la correcta.
+    \item \textbf{Greedy max}: Es el algoritmo más rápido, pero a costa de una calidad significativamente inferior. Es útil solo cuando la velocidad es crítica y se pueden aceptar soluciones de baja calidad.
+\end{itemize}
+
+No existe un algoritmo \textit{mejor} que otro; la elección depende del contexto. Si la optimalidad es un requisito estricto, DP es la única opción viable. Si se necesita una solución rápida para una entrada grande y una aproximación del 90-100\% al óptimo es aceptable, \textit{Greedy ratio} es una alternativa pragmática.
