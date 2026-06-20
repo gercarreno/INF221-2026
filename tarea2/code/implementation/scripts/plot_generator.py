@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy.stats import pearsonr, spearmanr
+
 
 # rutas
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -221,6 +223,25 @@ def plot_quality_finput(df):
             ax.set(xlabel=label, ylim=(0, 110))
             if col_idx == 0:
                 ax.set_ylabel(f"{ALG_LABELS[alg]}\n% del óptimo")
+
+            if len(subset) >= 3 and subset[var].nunique() > 1:
+                r_p, p_p = pearsonr(subset[var], subset["calidad_pct"])
+                r_s, p_s = spearmanr(subset[var], subset["calidad_pct"])
+                sig_p = "*" if p_p < 0.05 else ""
+                sig_s = "*" if p_s < 0.05 else ""
+                text = f"Pearson r={r_p:.2f}{sig_p}\nSpearman ρ={r_s:.2f}{sig_s}"
+            else:
+                text = "N insuficiente"
+
+            ax.text(
+                0.97, 0.05, text,
+                transform=ax.transAxes,
+                ha="right", va="bottom",
+                fontsize=8,
+                bbox=dict(boxstyle="round", facecolor="white", alpha=0.8, edgecolor="lightgray"),
+            )
+
+
 
     fig.suptitle("Impacto de variables en la calidad heurística", y=1.02)
     fig.tight_layout()
