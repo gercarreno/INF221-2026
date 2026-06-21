@@ -103,8 +103,6 @@ venv/
 **/report/_minted/
 
 # Ignore ALL compiled PDFs that LaTeX regenerates
-**/report/*.pdf
-**/assignment_statement/*.pdf
 
 # Explicitly keep the PDFs you want tracked
 # (uncomment when you are ready to commit a final version)
