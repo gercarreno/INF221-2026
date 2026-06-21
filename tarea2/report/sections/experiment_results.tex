@@ -146,11 +146,11 @@ $n$ es grande.
 
 La \cref{fig:calidad_inputs} nos muestra las variaciones de calidad (\% del óptimo) de ambas heurísticas utilizando técnicas de correlación.
 
-\textit{Greedy ratio} no presenta una correlación relevante: N animes ($r=0{,}34$), total de capítulos ($r=0{,}31$), minutos disponibles ($r=-0{,}10$) y energía disponible ($r=-0{,}31$), todas con $|r|\leq 0{,}35$. En otras palabras, ni el tamaño de la instancia ni la cantidad de recursos disponibles determinan por sí solos qué tan cerca del óptimo queda la solución.
+\textit{Greedy ratio} no presenta una correlación relevante con N animes ($r=0{,}29$), minutos disponibles ($r=0{,}12$) ni energía disponible ($r=0{,}02$). Sin embargo, sí se observa una correlación moderada y significativa con el total de capítulos ($r=0{,}48$, $p<0{,}05$). En otras palabras, ni el tamaño de la instancia ni la cantidad de recursos disponibles determinan por sí solos qué tan cerca del óptimo queda la solución, aunque la cantidad total de capítulos parece tener cierta influencia.
 
-\textit{Greedy max} sí muestra una correlación positiva y significativa con la calidad: N animes ($r=0{,}46$, $p<0{,}05$) y total de capítulos ($r=0{,}42$, $p<0{,}05$). Es decir, de las cuatro variables, son la cantidad de animes y de capítulos las que realmente influyen en qué tan buena es la solución, mientras que minutos disponibles ($r=0{,}06$) y energía disponible ($r=0{,}30$) no tienen un impacto tan notorio. La razón está en la lógica de la heurística. 
+\textit{Greedy max} no muestra correlación significativa con N animes ($r=0{,}05$) ni con total de capítulos ($r=0{,}05$), a diferencia de lo que podría esperarse dada la lógica de la heurística. En cambio, presenta correlaciones moderadas con minutos disponibles ($r=0{,}35$) y energía disponible ($r=-0{,}36$), aunque ninguna alcanza significancia ($p>0{,}05$ en ambos casos). Esto sugiere que la calidad de \textit{greedy max} está más influenciada por la disponibilidad de recursos que por el tamaño de la instancia.
 
-Ninguna variable de entrada es determinante para greedy ratio, mientras que para greedy max la calidad depende principalmente del número de animes y capítulos disponibles, y no de la cantidad de recursos (tiempo o energía).
+En definitiva, ninguna variable de entrada resulta fuertemente determinante para ninguna de las dos heurísticas, aunque \textit{greedy ratio} muestra cierta sensibilidad al total de capítulos y \textit{greedy max} a la disponibilidad de recursos.
 
 \subsubsection*{Calidad de Solución}
 
@@ -169,8 +169,8 @@ La relación entre el tiempo de ejecución y la calidad de la solución se obser
 De la \cref{fig:tradeoff} se puede concluir que:
 \begin{itemize}
     \item \textbf{Programación Dinámica (DP)}: Garantiza la solución óptima (100\% de calidad) pero con el mayor tiempo de ejecución. Es la elección correcta cuando la optimalidad es un requisito estricto.
-    \item \textbf{Greedy ratio}: Ofrece el mejor equilibrio, con una calidad muy cercana al óptimo (alrededor del 90-100\%) pero con órdenes de magnitud menor que DP respecto del tiempo de ejecución. Si nuestro problema nos permite tolerar una pequeña desviación respecto del óptimo, esta heurística es la correcta.
+    \item \textbf{Greedy ratio}: Ofrece el mejor equilibrio, con una calidad muy cercana al óptimo (alrededor del 80-100\%) pero con órdenes de magnitud menor que DP respecto del tiempo de ejecución. Si nuestro problema nos permite tolerar una pequeña desviación respecto del óptimo, esta heurística es la correcta.
     \item \textbf{Greedy max}: Es el algoritmo más rápido, pero a costa de una calidad significativamente inferior. Es útil solo cuando la velocidad es crítica y se pueden aceptar soluciones de baja calidad.
 \end{itemize}
 
-No existe un algoritmo \textit{mejor} que otro; la elección depende del contexto. Si la optimalidad es un requisito estricto, DP es la única opción viable. Si se necesita una solución rápida para una entrada grande y una aproximación del 90-100\% al óptimo es aceptable, \textit{Greedy ratio} es una alternativa pragmática.
+No existe un algoritmo \textit{mejor} que otro; la elección depende del contexto. Si la optimalidad es un requisito estricto, DP es la única opción viable. Si se necesita una solución rápida para una entrada grande y una aproximación del 80-100\% al óptimo es aceptable, \textit{Greedy ratio} es una alternativa pragmática.
