@@ -1,6 +1,6 @@
-# TAREA 2 INF221 2025-2
+# TAREA 2 INF221 2026-1
 
-## Estructura del Repositorio `INF-2025-2-TAREA-2`  
+## Estructura del Repositorio `INF-2026-2-TAREA-1`  
 
 Este repositorio contiene la documentación, el código fuente y las instrucciones necesarias para la realización de la Tarea 2 de la asignatura *INF221 Algoritmos y Complejidad*.  
 

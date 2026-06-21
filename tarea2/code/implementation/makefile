@@ -26,7 +26,7 @@ $(TARGET): $(OBJS)
 clean:
 	rm -f $(OBJS) $(DEPS) $(TARGET)
 clean-data:
-	rm -f ./data/inputs/* ./data/outputs/* ./data/measurements/*
+	rm -f ./data/inputs/* ./data/outputs/*
 
 #número de archivos
 N ?= 100
@@ -38,6 +38,6 @@ plot:
 run:
 	./animaraton
 
-# make rebuild
-rebuild: clean clean-data data all run
-.PHONY: all clean rebuild clean-data data plot run
+# make build
+build: clean clean-data data all run plot
+.PHONY: all clean clean-data data plot run build

@@ -21,11 +21,11 @@ En el peor caso, para cada anime $i$ se exploran $n\_cap_i + 1$ opciones.
 Si todos los animes tuvieran $C$ capítulos, el árbol de recursión tendría
 $(C+1)^n$ hojas, lo que da una complejidad temporal de
 $\mathcal{O}\!\left(C^n\right)$, exponencial en $n$.
-El espacio auxiliar es $\mathcal{O}(n)$.
+La complejidad espacial es $\mathcal{O}(n)$.
 
 
 \vspace{1cm}
-Los algoritmos greedy construyen la solución paso a paso, tomando en cada iteración el mejor candidato en ese momento, sin considerar decisiones pasadas. Para el problema se implementaron dos heurísticas greedy con diferentes lógicas \parencite{gfg_greedy_algorithms}.
+Los algoritmos greedy construyen la solución paso a paso, tomando en cada iteración el mejor candidato en ese momento, sin considerar decisiones pasadas. Para el problema se implementaron dos heurísticas con diferentes lógicas \parencite{gfg_greedy_algorithms}.
 
 \subsubsection*{Greedy ratio}
 Esta heurística evalúa cada par $(anime_i,\, k)$ — es decir, ver exactamente
@@ -42,7 +42,7 @@ de un mismo anime) \parencite{gfg_fractional_knapsack}.
 
 \paragraph{Complejidad}
 
-La generación de pares es $\mathcal{O}\!\left(\sum_{i=1}^n n\_cap_i\right)$.
+La creación de pares es $\mathcal{O}\!\left(\sum_{i=1}^n n\_cap_i\right)$.
 Denotando $P = \sum_i n\_cap_i$, el ordenamiento cuesta $\mathcal{O}(P \log P)$
 y el recorrido final es $\mathcal{O}(P)$.  En total, la complejidad temporal
 es $\mathcal{O}(P \log P)$ y el espacio es $\mathcal{O}(P)$.
@@ -112,12 +112,12 @@ Los resultados de la fase experimental se analizan a continuación.
 
 \subsubsection*{Análisis de Rendimiento Computacional}
 
-Los gráficos nos muestran que el comportamiento experimental no está tan alejada del marco teórico sobre la complejidad de cada algoritmo. Las \cref{fig:tiempo_vs_n,fig:tiempo_escalamiento} ilustran la drástica diferencia entre los enfoques. En una escala logarítmica, se observa cómo el tiempo de ejecución del algoritmo de fuerza bruta crece de manera exponencial, volviéndose poco eficiente para valores de $n$ superiores a 25. En contraste, los demás algoritmos muestran un crecimiento polinómico, lo que los hace viables para entradas considerablemente más grandes.
+Los gráficos nos muestran que el comportamiento experimental no está tan alejado del marco teórico sobre la complejidad de cada algoritmo. Las \cref{fig:tiempo_vs_n,fig:tiempo_escalamiento} ilustran la drástica diferencia entre los enfoques. En una escala logarítmica, se observa cómo el tiempo de ejecución del algoritmo de fuerza bruta crece de manera exponencial, volviéndose poco eficiente para valores de $n$ superiores a 25. En contraste, los demás algoritmos muestran un crecimiento polinómico, lo que los hace viables para entradas considerablemente más grandes.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{../code/implementation/data/plots/tiempo_algoritmos.png}
-    \caption{Comparación del tiempo de ejecución (en nanosegundos, escala logarítmica) en función del tamaño de la entrada $n$. Se evidencia el crecimiento exponencial de la fuerza bruta frente al crecimiento polinómico de los otros tres algoritmos.}
+    \caption{Comparación del tiempo de ejecución (en nanosegundos, escala \emph{log}) en función del tamaño de la entrada $n$. Se evidencia el crecimiento exponencial de la fuerza bruta frente al crecimiento polinómico de los otros tres algoritmos.}
     \label{fig:tiempo_vs_n}
 \end{figure}
 
@@ -146,7 +146,7 @@ $n$ es grande.
 
 La \cref{fig:calidad_inputs} nos muestra las variaciones de calidad (\% del óptimo) de ambas heurísticas utilizando técnicas de correlación.
 
-\textit{Greedy ratio.} no presenta una correlación relevante: N animes ($r=0{,}34$), total de capítulos ($r=0{,}31$), minutos disponibles ($r=-0{,}10$) y energía disponible ($r=-0{,}31$), todas con $|r|\leq 0{,}35$. En otras palabras, ni el tamaño de la instancia ni la cantidad de recursos disponibles determinan por sí solos qué tan cerca del óptimo queda la solución.
+\textit{Greedy ratio} no presenta una correlación relevante: N animes ($r=0{,}34$), total de capítulos ($r=0{,}31$), minutos disponibles ($r=-0{,}10$) y energía disponible ($r=-0{,}31$), todas con $|r|\leq 0{,}35$. En otras palabras, ni el tamaño de la instancia ni la cantidad de recursos disponibles determinan por sí solos qué tan cerca del óptimo queda la solución.
 
 \textit{Greedy max} sí muestra una correlación positiva y significativa con la calidad: N animes ($r=0{,}46$, $p<0{,}05$) y total de capítulos ($r=0{,}42$, $p<0{,}05$). Es decir, de las cuatro variables, son la cantidad de animes y de capítulos las que realmente influyen en qué tan buena es la solución, mientras que minutos disponibles ($r=0{,}06$) y energía disponible ($r=0{,}30$) no tienen un impacto tan notorio. La razón está en la lógica de la heurística. 
 
@@ -168,7 +168,7 @@ La relación entre el tiempo de ejecución y la calidad de la solución se obser
 
 De la \cref{fig:tradeoff} se puede concluir que:
 \begin{itemize}
-    \item \textbf{Programación Dinámica (DP)}: Garantiza la solución óptima (100\% de calidad) pero con el mayor tiempo de ejecución entre la batería de algoritmos. Es la elección correcta cuando la optimalidad es un requisito estricto.
+    \item \textbf{Programación Dinámica (DP)}: Garantiza la solución óptima (100\% de calidad) pero con el mayor tiempo de ejecución. Es la elección correcta cuando la optimalidad es un requisito estricto.
     \item \textbf{Greedy ratio}: Ofrece el mejor equilibrio, con una calidad muy cercana al óptimo (alrededor del 90-100\%) pero con órdenes de magnitud menor que DP respecto del tiempo de ejecución. Si nuestro problema nos permite tolerar una pequeña desviación respecto del óptimo, esta heurística es la correcta.
     \item \textbf{Greedy max}: Es el algoritmo más rápido, pero a costa de una calidad significativamente inferior. Es útil solo cuando la velocidad es crítica y se pueden aceptar soluciones de baja calidad.
 \end{itemize}
