@@ -1,0 +1,12 @@
+\section{Common Pitfalls \& General Tips}
+\subsection{Exam Traps}
+
+Save yourself hours of debugging during the exam by watching out for these frequent mistakes:
+
+\begin{itemize}
+    \item \textbf{The Memory Trap (MLE):} Using \texttt{\#define int long long} globally is a common trick to blindly prevent integer overflow. However, a 64-bit integer doubles your memory usage compared to a 32-bit integer. On strict problems (like CSES \textit{Book Shop}), this will instantly cause a Memory Limit Exceeded (MLE) error. Use standard 32-bit \texttt{int} for massive DP tables.
+    
+    \item \textbf{The Indexing Offset Trap:} Pay close attention to how items are indexed. On many graph problems or 2D DP matrices (like 0/1 Knapsack or Longest Common Subsequence) use \textbf{1-based indexing} for the state variables (e.g., \texttt{dp[i][w]} represents the first $i$ items). This allows row $0$ to safely act as the base case. However, your input arrays (like \texttt{items[i-1]}) use standard \textbf{0-based indexing}. Mixing these up is the number one cause of Out Of Bounds errors.
+    
+    \item \textbf{The "Infinity" Overflow:} When initializing DP tables for minimization problems, you often need an "Infinity" value. Do \textbf{not} use \texttt{INT\_MAX} if your state transition involves adding to it (e.g., \texttt{dp[i] = dp[prev] + cost}). \texttt{INT\_MAX + 1} will overflow into a massive negative number, completely breaking your \texttt{min()} logic. Instead, use a "safe infinity" like \texttt{1e9} for 32-bit integers, or \texttt{1e15} for \texttt{long long}.
+\end{itemize}

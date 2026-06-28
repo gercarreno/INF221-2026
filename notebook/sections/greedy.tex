@@ -1,0 +1,825 @@
+\section{Greedy Fundamentals \& Sorting}
+
+\subsection{Greedy Heuristics: The Knapsack Problem}
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Item {
+    int value;
+    int weight;
+};
+
+// Time Complexity: O(1)
+bool compareByRatio(const Item& a, const Item& b) {
+    double ratio_a = (double)a.value / a.weight;
+    double ratio_b = (double)b.value / b.weight;
+    return ratio_a > ratio_b;
+}
+
+double getMaximumKnapsackValue(vector<Item>& items, int capacity) {
+    // Time Complexity: O(N log N) to sort the items
+    // Space Complexity: O(log N) auxiliary space for std::sort
+    sort(items.begin(), items.end(), compareByRatio);
+    double total_value = 0.0;
+    int current_weight = 0;
+    
+    // Time Complexity: O(N) - Linear scan through the sorted items
+    for (const Item& item : items) {
+        if (current_weight + item.weight <= capacity) {
+            current_weight += item.weight;
+            total_value += item.value;
+        } else {
+            int remaining_capacity = capacity - current_weight;
+            total_value += item.value * ((double)remaining_capacity / item.weight);
+            break; 
+        }
+    }
+    return total_value;
+}
+
+int main() {
+    int num_items, capacity;
+    cin >> num_items >> capacity;
+    // Space Complexity: O(N) where N is num_items
+    vector<Item> items(num_items);
+    // Time Complexity: O(N) to read items
+    for (int i = 0; i < num_items; ++i) {
+        cin >> items[i].value >> items[i].weight;
+    }
+    
+    cout << getMaximumKnapsackValue(items, capacity) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Shopaholic [Kattis]}
+\textbf{Concept:} Greedy Sorting. To maximize the discount, sort items descending and get the 3rd, 6th, 9th, etc., items for free.
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+long long calculateMaximumDiscount(vector<long long>& prices) {
+    // Time Complexity: O(N log N)
+    sort(prices.rbegin(), prices.rend()); // Sort descending
+    
+    long long total_discount = 0;
+    // Time Complexity: O(N)
+    for (size_t i = 2; i < prices.size(); i += 3) {
+        total_discount += prices[i];
+    }
+    
+    return total_discount;
+}
+
+int main() {
+    int num_items;
+    cin >> num_items;
+    
+    // Space Complexity: O(N)
+    vector<long long> prices(num_items);
+    for (int i = 0; i < num_items; ++i) {
+        cin >> prices[i];
+    }
+    
+    cout << calculateMaximumDiscount(prices) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Frosh Week (Inversion Counting) [Kattis]}
+\textbf{Concept:} This problem asks for the minimum number of swaps to sort an array, which is exactly the number of "inversions". We use Merge Sort to count these efficiently.
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+// Time Complexity: O(N log N) total for the merge sort process
+// Space Complexity: O(N) for the temporary array
+long long mergeAndCount(vector<int>& array, vector<int>& temp, int left, int mid, int right) {
+    int i = left;
+    int j = mid + 1;
+    int k = left;
+    long long inversions = 0;
+    while (i <= mid && j <= right) {
+        if (array[i] <= array[j]) {
+            temp[k++] = array[i++];
+        } else {
+            temp[k++] = array[j++];
+            // If array[i] > array[j], all remaining elements in the left half are also > array[j]
+            inversions += (mid - i + 1);
+        }
+    }
+
+    while (i <= mid) temp[k++] = array[i++];
+    while (j <= right) temp[k++] = array[j++];
+    for (i = left; i <= right; i++) array[i] = temp[i];
+
+    return inversions;
+}
+
+long long countSwaps(vector<int>& array, vector<int>& temp, int left, int right) {
+    long long inversions = 0;
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        inversions += countSwaps(array, temp, left, mid);
+        inversions += countSwaps(array, temp, mid + 1, right);
+        inversions += mergeAndCount(array, temp, left, mid, right);
+    }
+    return inversions;
+}
+
+int main() {
+    int num_students;
+    if (!(cin >> num_students)) return 0;
+
+    vector<int> student_numbers(num_students);
+    vector<int> temp_array(num_students);
+    for (int i = 0; i < num_students; ++i) {
+        cin >> student_numbers[i];
+    }
+
+    cout << countSwaps(student_numbers, temp_array, 0, num_students - 1) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+
+\section{Interval Scheduling \& Placement}
+
+\subsection{Greedy Scheduling (Activity Selection)}
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Activity {
+    int start_time;
+    int end_time;
+};
+
+// Time Complexity: O(1) per comparison
+bool compareActivities(Activity a, Activity b) {
+    return a.end_time < b.end_time;
+}
+
+int getMaximumActivities(vector<Activity>& activity_list) {
+    if (activity_list.empty()) return 0;
+    // Time Complexity: O(N log N) where N is the number of activities
+    // Space Complexity: O(log N) auxiliary space for std::sort (IntroSort)
+    sort(activity_list.begin(), activity_list.end(), compareActivities);
+    int count_selected = 1;
+    int current_end_time = activity_list[0].end_time;
+    
+    // Time Complexity: O(N) - Single pass through the sorted activities
+    for (size_t i = 1; i < activity_list.size(); ++i) {
+        if (activity_list[i].start_time >= current_end_time) {
+            count_selected++;
+            current_end_time = activity_list[i].end_time;
+        }
+    }
+    return count_selected;
+}
+
+int main() {
+    int num_activities;
+    cin >> num_activities;
+    // Space Complexity: O(N) where N is num_activities
+    vector<Activity> activity_list(num_activities);
+    // Time Complexity: O(N) to read inputs
+    for (int i = 0; i < num_activities; ++i) {
+        cin >> activity_list[i].start_time >> activity_list[i].end_time;
+    }
+    
+    cout << getMaximumActivities(activity_list) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Assigning Workstations [Kattis]}
+\textbf{Concept:} Greedy Scheduling. Sort researchers by arrival time. Use a Min-Heap to track when currently used workstations will lock.
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+
+using namespace std;
+struct Researcher {
+    long long arrival;
+    long long stay;
+};
+// Time Complexity: O(1)
+bool compareArrivals(const Researcher& a, const Researcher& b) {
+    return a.arrival < b.arrival;
+}
+
+int calculateSavedUnlocks(vector<Researcher>& researchers, long long lock_timeout) {
+    // Time Complexity: O(N log N)
+    sort(researchers.begin(), researchers.end(), compareArrivals);
+    // Space Complexity: O(N) in worst case
+    priority_queue<long long, vector<long long>, greater<long long>> active_machines;
+    int saved_unlocks = 0;
+    
+    // Time Complexity: O(N log N) - N iterations, heap operations take log N
+    for (const Researcher& person : researchers) {
+        long long current_time = person.arrival;
+        // Remove machines that have already locked
+        while (!active_machines.empty() && active_machines.top() + lock_timeout < current_time) {
+            active_machines.pop();
+        }
+        
+        // If a machine is available and hasn't locked
+        if (!active_machines.empty() && active_machines.top() <= current_time) {
+            saved_unlocks++;
+            active_machines.pop();
+        }
+        
+        // Machine will be free after they finish
+        active_machines.push(current_time + person.stay);
+    }
+    
+    return saved_unlocks;
+}
+
+int main() {
+    int num_researchers;
+    long long lock_timeout;
+    cin >> num_researchers >> lock_timeout;
+    
+    vector<Researcher> researchers(num_researchers);
+    for (int i = 0; i < num_researchers; ++i) {
+        cin >> researchers[i].arrival >> researchers[i].stay;
+    }
+    
+    cout << calculateSavedUnlocks(researchers, lock_timeout) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Birds on a Wire [Kattis]}
+\textbf{Concept:} Greedy Placement. Sort existing birds, then calculate how many fit in the gaps between them, including the edges.
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int getAdditionalBirds(long long wire_length, long long distance, vector<long long>& birds) {
+    if (wire_length <= 12) return 0;
+    // Must be at least 6 from each pole
+    
+    // If no birds, calculate max possible on the whole valid wire
+    if (birds.empty()) {
+        return ((wire_length - 12) / distance) + 1;
+    }
+    
+    // Time Complexity: O(N log N)
+    // Space Complexity: O(log N) auxiliary
+    sort(birds.begin(), birds.end());
+    int new_birds = 0;
+    
+    // Check gap from left pole (requires 6 units)
+    if (birds[0] - 6 >= distance) {
+        new_birds += (birds[0] - 6) / distance;
+    }
+    
+    // Check gaps between existing birds. Time Complexity: O(N)
+    for (size_t i = 0; i < birds.size() - 1; ++i) {
+        long long gap = birds[i+1] - birds[i];
+        if (gap >= 2 * distance) {
+            new_birds += (gap / distance) - 1;
+        }
+    }
+    
+    // Check gap to right pole (requires 6 units)
+    long long last_bird = birds.back();
+    if ((wire_length - 6) - last_bird >= distance) {
+        new_birds += ((wire_length - 6) - last_bird) / distance;
+    }
+    
+    return new_birds;
+}
+
+int main() {
+    long long wire_length, distance;
+    int num_birds;
+    cin >> wire_length >> distance >> num_birds;
+    
+    vector<long long> birds(num_birds);
+    for (int i = 0; i < num_birds; ++i) {
+        cin >> birds[i];
+    }
+    
+    cout << getAdditionalBirds(wire_length, distance, birds) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+
+\section{Priority Queues \& Data Structures}
+
+\subsection{Huffman Codes}
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+struct Node {
+    char character;
+    int frequency;
+    Node* left_child;
+    Node* right_child;
+};
+
+// Time Complexity: O(1) per comparison
+struct CompareNodes {
+    bool operator()(Node* a, Node* b) {
+        return a->frequency > b->frequency;
+    }
+};
+
+Node* buildHuffmanTree(vector<char>& characters, vector<int>& frequencies) {
+    // Space Complexity: O(N) where N is the number of unique characters
+    priority_queue<Node*, vector<Node*>, CompareNodes> min_heap;
+    // Time Complexity: O(N log N) - N insertions, each taking O(log N) time
+    for (size_t i = 0; i < characters.size(); ++i) {
+        // Space Complexity: O(1) per node, O(N) total across the loop
+        Node* new_node = new Node{characters[i], frequencies[i], nullptr, nullptr};
+        min_heap.push(new_node);
+    }
+    
+    // Time Complexity: O(N log N) - (N-1) merges, each doing O(log N) heap operations
+    while (min_heap.size() > 1) {
+        Node* left = min_heap.top();
+        min_heap.pop();
+        Node* right = min_heap.top(); min_heap.pop();
+        
+        int combined_freq = left->frequency + right->frequency;
+        // Space Complexity: O(1) per internal node, O(N) total for N-1 internal nodes
+        Node* parent = new Node{'\0', combined_freq, left, right};
+        min_heap.push(parent);
+    }
+    
+    return min_heap.top(); 
+}
+
+int main() {
+    int num_chars;
+    cin >> num_chars;
+    
+    // Space Complexity: O(N) for characters array
+    vector<char> characters(num_chars);
+    // Space Complexity: O(N) for frequencies array
+    vector<int> frequencies(num_chars);
+    // Time Complexity: O(N) to read inputs
+    for (int i = 0; i < num_chars; ++i) {
+        cin >> characters[i] >> frequencies[i];
+    }
+    
+    Node* root = buildHuffmanTree(characters, frequencies);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Boiling Vegetables [Kattis]}
+\textbf{Concept:} Priority Queue. Always slice the piece that is currently the largest. Keep track of the minimum piece globally to check the ratio.
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+struct Veggie {
+    double original_weight;
+    int cuts;
+    double current_weight;
+};
+// Max-Heap comparator: order by current weight descending
+struct CompareVeggie {
+    bool operator()(const Veggie& a, const Veggie& b) {
+        return a.current_weight < b.current_weight;
+    }
+};
+
+int getMinimumCuts(double target_ratio, vector<double>& weights) {
+    // Space Complexity: O(N)
+    priority_queue<Veggie, vector<Veggie>, CompareVeggie> max_heap;
+    double current_min_weight = 1e9;
+    
+    // Time Complexity: O(N log N) to build
+    for (double w : weights) {
+        max_heap.push({w, 1, w});
+        if (w < current_min_weight) {
+            current_min_weight = w;
+        }
+    }
+    
+    int total_cuts = 0;
+    // Time Complexity: O(Cuts * log N). Exact bound depends on inputs.
+    while (true) {
+        Veggie largest = max_heap.top();
+        // If the ratio between smallest and largest is valid, we are done
+        if (current_min_weight / largest.current_weight > target_ratio) {
+            break;
+        }
+        
+        max_heap.pop();
+        largest.cuts++;
+        largest.current_weight = largest.original_weight / largest.cuts;
+        
+        // Update global min if the new piece is the smallest
+        if (largest.current_weight < current_min_weight) {
+            current_min_weight = largest.current_weight;
+        }
+        
+        max_heap.push(largest);
+        total_cuts++;
+    }
+    
+    return total_cuts;
+}
+
+int main() {
+    double target_ratio;
+    int num_veggies;
+    cin >> target_ratio >> num_veggies;
+    
+    vector<double> weights(num_veggies);
+    for (int i = 0; i < num_veggies; ++i) {
+        cin >> weights[i];
+    }
+    
+    cout << getMinimumCuts(target_ratio, weights) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+
+\section{Minimum Spanning Trees (MST)}
+
+\subsection{Prim's Algorithm (Adjacency Matrix)}
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <climits>
+
+using namespace std;
+int getMinimumVertex(const vector<int>& min_edge_weights, const vector<bool>& is_in_mst, int num_vertices) {
+    int min_weight = INT_MAX;
+    int min_vertex = -1;
+    
+    // Time Complexity: O(V) - Must scan all vertices to find the minimum
+    for (int v = 0; v < num_vertices; ++v) {
+        if (!is_in_mst[v] && min_edge_weights[v] < min_weight) {
+            min_weight = min_edge_weights[v];
+            min_vertex = v;
+        }
+    }
+    return min_vertex;
+}
+
+int calculatePrimMSTMatrix(const vector<vector<int>>& graph_matrix, int num_vertices) {
+    // Space Complexity: O(V) where V is num_vertices
+    vector<int> min_edge_weights(num_vertices, INT_MAX);
+    // Space Complexity: O(V)
+    vector<bool> is_in_mst(num_vertices, false);         
+    
+    int total_mst_weight = 0;
+    min_edge_weights[0] = 0;
+    // Time Complexity: O(V^2) total. Outer loop runs V times.
+    for (int count = 0; count < num_vertices; ++count) {
+        // Inner operation 1: O(V) to find the minimum vertex
+        int current_u = getMinimumVertex(min_edge_weights, is_in_mst, num_vertices);
+        is_in_mst[current_u] = true;
+        total_mst_weight += min_edge_weights[current_u];
+        
+        // Inner operation 2: O(V) to update adjacent vertices
+        for (int v = 0; v < num_vertices; ++v) {
+            int edge_weight = graph_matrix[current_u][v];
+            if (edge_weight != 0 && !is_in_mst[v] && edge_weight < min_edge_weights[v]) {
+                min_edge_weights[v] = edge_weight;
+            }
+        }
+    }
+    return total_mst_weight;
+}
+
+int main() {
+    int num_vertices;
+    cin >> num_vertices;
+    // Space Complexity: O(V^2) for the adjacency matrix
+    vector<vector<int>> graph_matrix(num_vertices, vector<int>(num_vertices));
+    // Time Complexity: O(V^2) to read the matrix
+    for (int i = 0; i < num_vertices; ++i) {
+        for (int j = 0; j < num_vertices; ++j) {
+            cin >> graph_matrix[i][j];
+        }
+    }
+    
+    cout << calculatePrimMSTMatrix(graph_matrix, num_vertices) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Prim's Algorithm (Priority Queue and Adjacency List)}
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+struct Edge {
+    int target_vertex;
+    int weight;
+};
+
+// Time Complexity: O(1) per comparison
+struct CompareEdge {
+    bool operator()(const Edge& a, const Edge& b) {
+        return a.weight > b.weight;
+    }
+};
+
+int calculatePrimMSTList(const vector<vector<Edge>>& adjacency_list, int num_vertices) {
+    // Space Complexity: O(E) in the worst case, where E is the number of edges
+    priority_queue<Edge, vector<Edge>, CompareEdge> min_heap;
+    // Space Complexity: O(V)
+    vector<bool> is_in_mst(num_vertices, false);              
+    
+    int total_mst_weight = 0;
+    int edges_added = 0;
+    
+    min_heap.push({0, 0});
+    // Time Complexity: O(E log E) or equivalently O(E log V)
+    // The while loop processes at most E edges.
+    while (!min_heap.empty() && edges_added < num_vertices) {
+        // Heap pop takes O(log E) time
+        Edge current_edge = min_heap.top();
+        min_heap.pop();
+        
+        int current_vertex = current_edge.target_vertex;
+        
+        if (is_in_mst[current_vertex]) continue;
+        
+        is_in_mst[current_vertex] = true;
+        total_mst_weight += current_edge.weight;
+        edges_added++;
+        
+        // Push unvisited neighbors. Over the whole algorithm, this runs E times total.
+        // Heap push takes O(log E) time.
+        for (const Edge& neighbor : adjacency_list[current_vertex]) {
+            if (!is_in_mst[neighbor.target_vertex]) {
+                min_heap.push(neighbor);
+            }
+        }
+    }
+    return total_mst_weight;
+}
+
+int main() {
+    int num_vertices, num_edges;
+    cin >> num_vertices >> num_edges;
+    // Space Complexity: O(V + E) for the adjacency list representation
+    vector<vector<Edge>> adjacency_list(num_vertices);
+    // Time Complexity: O(E) to read edges
+    for (int i = 0; i < num_edges; ++i) {
+        int u, v, weight;
+        cin >> u >> v >> weight;
+        adjacency_list[u].push_back({v, weight});
+        adjacency_list[v].push_back({u, weight});
+    }
+    
+    cout << calculatePrimMSTList(adjacency_list, num_vertices) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Kruskal's Algorithm}
+\subsubsection{Bases for Kruskal's Algorithm}
+\begin{itemize}
+    \item \textbf{The Strategy:} Sort all edges in non-decreasing order of their weight. Pick the smallest edge. If it forms a cycle with the spanning tree formed so far, discard it. If not, include it.
+    \item \textbf{Cycle Detection:} Uses the Disjoint Set Union (DSU) data structure. If both vertices of an edge belong to the same set, adding the edge will create a cycle.
+    \item \textbf{Complexity:} $O(E \log E)$ or $O(E \log V)$. It is generally preferred for sparse graphs where edges can be easily sorted.
+\end{itemize}
+
+\subsubsection{Implementation: Union-Find and Edge Sorting}
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Edge {
+    int source;
+    int destination;
+    int weight;
+};
+
+// Time Complexity: O(1)
+bool compareEdges(const Edge& a, const Edge& b) {
+    return a.weight < b.weight;
+}
+
+// --- Disjoint Set Union (DSU) Helper Functions ---
+
+// Time Complexity: O(alpha(V)) ~ O(1) due to path compression
+int findParent(int vertex, vector<int>& parent_array) {
+    if (parent_array[vertex] == vertex) {
+        return vertex;
+    }
+    // Path compression: attach the node directly to the root
+    return parent_array[vertex] = findParent(parent_array[vertex], parent_array);
+}
+
+// Time Complexity: O(alpha(V)) ~ O(1)
+void unionSets(int vertex_u, int vertex_v, vector<int>& parent_array, vector<int>& rank_array) {
+    int root_u = findParent(vertex_u, parent_array);
+    int root_v = findParent(vertex_v, parent_array);
+    
+    if (root_u != root_v) {
+        // Union by rank: attach smaller tree under root of deeper tree
+        if (rank_array[root_u] < rank_array[root_v]) {
+            parent_array[root_u] = root_v;
+        } else if (rank_array[root_u] > rank_array[root_v]) {
+            parent_array[root_v] = root_u;
+        } else {
+            parent_array[root_v] = root_u;
+            rank_array[root_u]++;
+        }
+    }
+}
+
+// --- Main Kruskal Logic ---
+
+int calculateKruskalMST(vector<Edge>& edge_list, int num_vertices) {
+    // Time Complexity: O(E log E) to sort the edges
+    // Space Complexity: O(log E) auxiliary space for std::sort
+    sort(edge_list.begin(), edge_list.end(), compareEdges);
+    // Space Complexity: O(V) for parent and rank arrays
+    vector<int> parent_array(num_vertices);
+    vector<int> rank_array(num_vertices, 0);
+    // Initialize DSU: Every vertex is its own parent initially
+    for (int i = 0; i < num_vertices; ++i) {
+        parent_array[i] = i;
+    }
+    
+    int total_mst_weight = 0;
+    int edges_added = 0;
+    // Time Complexity: O(E * alpha(V)) ~ O(E) for the loop
+    for (const Edge& edge : edge_list) {
+        // Stop early if we've added V-1 edges (a complete spanning tree)
+        if (edges_added == num_vertices - 1) break;
+        int root_source = findParent(edge.source, parent_array);
+        int root_dest = findParent(edge.destination, parent_array);
+        // If they don't share a parent, adding this edge won't create a cycle
+        if (root_source != root_dest) {
+            total_mst_weight += edge.weight;
+            unionSets(root_source, root_dest, parent_array, rank_array);
+            edges_added++;
+        }
+    }
+    
+    return total_mst_weight;
+}
+
+int main() {
+    int num_vertices, num_edges;
+    cin >> num_vertices >> num_edges;
+    // Space Complexity: O(E) to store the list of all edges
+    vector<Edge> edge_list(num_edges);
+    // Time Complexity: O(E) to read edges
+    for (int i = 0; i < num_edges; ++i) {
+        cin >> edge_list[i].source >> edge_list[i].destination >> edge_list[i].weight;
+    }
+    
+    cout << calculateKruskalMST(edge_list, num_vertices) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Lost Map [Kattis]}
+\textbf{Concept:} Kruskal's MST from an Adjacency Matrix. The shortest paths between adjacent villages form the MST of the complete graph.
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+struct Edge {
+    int u, v, weight;
+};
+bool compareEdges(const Edge& a, const Edge& b) {
+    return a.weight < b.weight;
+}
+
+// Time Complexity: O(1) amortized
+int findParent(int i, vector<int>& parent) {
+    if (parent[i] == i) return i;
+    return parent[i] = findParent(parent[i], parent);
+}
+
+void printLostMapEdges(vector<Edge>& edges, int num_vertices) {
+    // Time Complexity: O(V^2 log(V^2)) to sort edges
+    sort(edges.begin(), edges.end(), compareEdges);
+    // Space Complexity: O(V)
+    vector<int> parent(num_vertices + 1);
+    for (int i = 1; i <= num_vertices; ++i) parent[i] = i;
+    
+    int edges_printed = 0;
+    // Time Complexity: O(V^2) loop iterations
+    for (const Edge& e : edges) {
+        if (edges_printed == num_vertices - 1) break;
+        int root_u = findParent(e.u, parent);
+        int root_v = findParent(e.v, parent);
+        if (root_u != root_v) {
+            cout << e.u << " " << e.v << "\n";
+            parent[root_u] = root_v;
+            edges_printed++;
+        }
+    }
+}
+
+int main() {
+    int num_vertices;
+    cin >> num_vertices;
+    // Space Complexity: O(V^2)
+    vector<Edge> edges;
+    for (int i = 1; i <= num_vertices; ++i) {
+        for (int j = 1; j <= num_vertices; ++j) {
+            int weight;
+            cin >> weight;
+            // Only add upper triangle of the matrix to avoid duplicates
+            if (i < j) {
+                edges.push_back({i, j, weight});
+            }
+        }
+    }
+    
+    printLostMapEdges(edges, num_vertices);
+    return 0;
+}
+\end{lstlisting}
+
+
+\section{Ad-Hoc / Mathematical Greedy}
+
+\subsection{Ants [Kattis]}
+\textbf{Concept:} Independent movement. When ants collide, they bounce, which is mathematically identical to them passing through each other.
+Min time: The last ant to fall off if they all walk to their *closest* edge.
+Max time: The last ant to fall off if they all walk to their *furthest* edge.
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+void calculateAntTimes(int pole_length, const vector<int>& ant_positions) {
+    int earliest_time = 0;
+    int latest_time = 0;
+    
+    // Time Complexity: O(N) - single pass
+    for (int pos : ant_positions) {
+        int distance_left = pos;
+        int distance_right = pole_length - pos;
+        
+        int min_dist = min(distance_left, distance_right);
+        int max_dist = max(distance_left, distance_right);
+        if (min_dist > earliest_time) earliest_time = min_dist;
+        if (max_dist > latest_time) latest_time = max_dist;
+    }
+    
+    cout << earliest_time << " " << latest_time << "\n";
+}
+
+int main() {
+    int num_test_cases;
+    cin >> num_test_cases;
+    while (num_test_cases--) {
+        int pole_length, num_ants;
+        cin >> pole_length >> num_ants;
+        // Space Complexity: O(N)
+        vector<int> ant_positions(num_ants);
+        for (int i = 0; i < num_ants; ++i) {
+            cin >> ant_positions[i];
+        }
+        
+        calculateAntTimes(pole_length, ant_positions);
+    }
+    return 0;
+}
+\end{lstlisting}

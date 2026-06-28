@@ -1,0 +1,116 @@
+\section{Basics \& Essential Snippets}
+
+\subsection{Template Setup \& I/O Optimizations}
+\textbf{Note:} the bits library is a GCC-specific header that includes almost every standard library in C++. It slows down compilation slightly but saves time typing during an exam.
+
+\begin{lstlisting}
+#include <bits/stdc++.h> 
+using namespace std;
+
+// Replaces all 'int' with 'long long' to prevent integer overflow globally.
+// WARNING: If you use this, your main function MUST be declared as int32_t.
+
+#define int long long
+
+signed main() {
+    // I/O Optimizations: Disconnects C and C++ standard streams.
+    // Makes cin/cout almost as fast as scanf/printf.
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int num_elements, target_value;
+    
+    // Reading until End of File (EOF). 
+    // Useful when the problem doesn't specify the number of test cases.
+    while (cin >> num_elements >> target_value) {
+        // Process each test case here
+    }
+    
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Basic Structures, Vectors, and Matrices}
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// 1. Defining a Struct
+struct Player {
+    int score;
+    int penalties;
+};
+
+// 2. Comparing Two Elements (Custom Sorting)
+// Returns true if 'a' should be placed BEFORE 'b' in the sorted array
+bool comparePlayers(const Player& a, const Player& b) {
+    if (a.score != b.score) {
+        return a.score > b.score; // Primary rule: Sort descending by score
+    }
+    return a.penalties < b.penalties; // Tie-breaker: Sort ascending by penalties
+}
+
+void standardDataStructures() {
+    int num_items = 10;
+    int rows = 5, cols = 5;
+
+    // 3. Defining a Vector (1D Array)
+    // Space Complexity: O(N)
+    // Creates a vector of size 10, with all elements initialized to 0
+    vector<int> one_dimensional_array(num_items, 0); 
+
+    // 4. Defining a Matrix (2D Vector)
+    // Space Complexity: O(Rows * Cols)
+    // Creates a 5x5 matrix, with all elements initialized to -1
+    vector<vector<int>> matrix(rows, vector<int>(cols, -1));
+
+    // 5. Selecting Maximum Element
+    vector<int> numbers = {1, 5, 3, 9, 2};
+    
+    // Time Complexity: O(N)
+    // Note: max_element returns an ITERATOR. We use '*' to get the actual value.
+    int max_value = *max_element(numbers.begin(), numbers.end());
+}
+\end{lstlisting}
+
+\subsection{Backtracking to Find DP Solutions}
+\textbf{Concept:} Once a DP table is filled, you start from the final optimal state (usually the bottom-right corner of the matrix) and trace backward. You compare the current state to previous states to determine which ``choice'' led you to the current optimal value.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+// Example: Recovering the items chosen in a 0/1 Knapsack Problem
+// dp_table[i][w] stores the max value using the first 'i' items with capacity 'w'.
+vector<int> getChosenItems(const vector<vector<int>>& dp_table, const vector<int>& weights, int num_items, int max_capacity) {
+    // Space Complexity: O(N) to store the result
+    vector<int> chosen_items;
+    
+    int current_weight = max_capacity;
+
+    // Time Complexity: O(N) - We backtrack step-by-step through the items
+    for (int i = num_items; i > 0; --i) {
+        
+        // If the value in the DP table changed compared to the row above it,
+        // it means we MUST have included item 'i' to achieve this value.
+        if (dp_table[i][current_weight] != dp_table[i-1][current_weight]) {
+            
+            // Note: DP table items are 1-indexed, but array weights are 0-indexed.
+            int original_item_index = i - 1;
+            chosen_items.push_back(original_item_index);
+            
+            // Deduct the weight of the chosen item to move left in the DP table
+            current_weight -= weights[original_item_index];
+        }
+    }
+    
+    // Optional: reverse(chosen_items.begin(), chosen_items.end()); 
+    // Do this if you need the items in the order they originally appeared.
+    return chosen_items;
+}
+\end{lstlisting}

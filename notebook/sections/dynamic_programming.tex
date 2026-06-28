@@ -1,0 +1,1600 @@
+\section{Strategies and Base Concepts}
+
+
+\subsection{Dynamic Programming: General Strategy}
+Dynamic Programming (DP) is a systematic way to avoid doing the same work twice.
+If a problem feels like magic, it is usually just a well-defined DP state.
+
+\subsubsection{Step 1: Identifying a DP Problem}
+Do not waste time on DP if a simple Greedy approach works.
+A problem requires DP if it triggers these conditions:
+\begin{itemize}
+    \item \textbf{The Goal:} The problem asks for an extreme value (e.g., \textit{``maximize profit''}, \textit{``minimize cost''}) or an exhaustive count (e.g., \textit{``how many ways to...''}).
+    \item \textbf{Overlapping Subproblems:} If you draw out the decision tree and see that you are calculating the exact same scenario multiple times, you need DP to memorize those answers.
+    \item \textbf{Optimal Substructure:} The absolute best solution for the large problem can be built simply by combining the absolute best solutions of smaller sub-problems.
+\end{itemize}
+
+\subsubsection{Step 2: Connecting the Dots}
+Once your state is minimally defined, the rest of the algorithm naturally follows:
+\begin{itemize}
+    \item \textbf{Base Cases:} The trivial ``bottom'' of the problem (e.g., If my knapsack capacity is 0, my maximum value is 0).
+    \item \textbf{State Transition:} The mathematical formula that tells you how to calculate the current state from previous states.
+    It usually looks like a \texttt{max()} or \texttt{min()} function choosing between two paths (e.g., \textit{``Do I take this item, or do I leave it?''}).
+    \item \textbf{Tabulation:} Setting up your nested \texttt{for} loops to fill your array from the base cases all the way up to the final answer (the bottom-up approach).
+\end{itemize}
+
+\subsection{Sequence Alignment (Edit Distance)}
+\textbf{Concept:} Find the minimum cost to transform one string into another using insertions, deletions, and substitutions.
+\\
+\textbf{State:} \texttt{dp[i][j]} represents the minimum cost to align the first \texttt{i} characters of string 1 with the first \texttt{j} characters of string 2.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+int getMinimumAlignmentCost(const string& str1, const string& str2, int insert_cost, int delete_cost, int replace_cost) {
+    int len1 = str1.length();
+    int len2 = str2.length();
+    
+    // Space Complexity: O(N * M) where N and M are the lengths of the strings
+    vector<vector<int>> dp(len1 + 1, vector<int>(len2 + 1, 0));
+    // Base cases: transforming to an empty string requires all deletions or insertions
+    for (int i = 0; i <= len1; ++i) dp[i][0] = i * delete_cost;
+    for (int j = 0; j <= len2; ++j) dp[0][j] = j * insert_cost;
+    // Time Complexity: O(N * M) to fill the table
+    for (int i = 1; i <= len1; ++i) {
+        for (int j = 1; j <= len2; ++j) {
+            if (str1[i - 1] == str2[j - 1]) {
+                // Characters match, no additional cost
+                dp[i][j] = dp[i - 1][j - 1];
+            } else {
+                // Characters differ, take the minimum of the three operations
+                int cost_replace = dp[i - 1][j - 1] + replace_cost;
+                int cost_delete  = dp[i - 1][j] + delete_cost;
+                int cost_insert  = dp[i][j - 1] + insert_cost;
+                dp[i][j] = min({cost_replace, cost_delete, cost_insert});
+            }
+        }
+    }
+    return dp[len1][len2];
+}
+\end{lstlisting}
+
+\subsection{Optimal Binary Search Tree (OBST)}
+\textbf{Concept:} Given a sorted array of keys and their search frequencies, construct a BST that minimizes the total expected search cost.
+\\
+\textbf{State:} \texttt{dp[i][j]} represents the minimum search cost for a BST containing keys from index \texttt{i} to \texttt{j}.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <climits>
+#include <algorithm>
+
+using namespace std;
+
+// Helper function to get the sum of frequencies from index i to j
+// Time Complexity: O(1) because we use a precomputed prefix sum array
+int getFrequencySum(const vector<int>& prefix_sums, int i, int j) {
+    if (i == 0) return prefix_sums[j];
+    return prefix_sums[j] - prefix_sums[i - 1];
+}
+
+int calculateOBSTCost(const vector<int>& frequencies, int num_keys) {
+    // Space Complexity: O(N^2) for the DP table
+    vector<vector<int>> dp(num_keys, vector<int>(num_keys, 0));
+    // Space Complexity: O(N) for prefix sums
+    vector<int> prefix_sums(num_keys, 0);
+    prefix_sums[0] = frequencies[0];
+    for (int i = 1; i < num_keys; ++i) {
+        prefix_sums[i] = prefix_sums[i - 1] + frequencies[i];
+    }
+    
+    // Base Case: Trees with a single key have a cost equal to their frequency
+    for (int i = 0; i < num_keys; ++i) {
+        dp[i][i] = frequencies[i];
+    }
+    
+    // Time Complexity: O(N^3) total.
+    // L is the length of the chain being evaluated (from 2 to num_keys)
+    for (int L = 2; L <= num_keys; ++L) {
+        for (int i = 0; i <= num_keys - L; ++i) {
+            int j = i + L - 1;
+            dp[i][j] = INT_MAX;
+            
+            // Try making every key 'k' in the range [i, j] the root
+            for (int k = i; k <= j; ++k) {
+                // Cost of left subtree (0 if k is the first element)
+                int left_cost = (k > i) ? dp[i][k - 1] : 0;
+                // Cost of right subtree (0 if k is the last element)
+                int right_cost = (k < j) ? dp[k + 1][j] : 0;
+                
+                // Total cost = cost of subtrees + sum of frequencies in this range
+                // (because pushing everything down one level adds 1 * frequency to the total cost)
+                int total_cost = left_cost + right_cost + getFrequencySum(prefix_sums, i, j);
+                dp[i][j] = min(dp[i][j], total_cost);
+            }
+        }
+    }
+    return dp[0][num_keys - 1];
+}
+\end{lstlisting}
+
+\section{Combinatorics and Coin Change}
+
+\subsection{Dice Combinations [CSES]}
+\textbf{Concept:} Find the number of ways to construct sum $n$ throwing a 6-sided dice.
+\\
+\textbf{State:} \texttt{dp[i]} = number of ways to make sum \texttt{i}.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define int long long
+const int MOD = 1e9 + 7;
+
+int countDiceWays(int target_sum) {
+    // Space: O(N)
+    vector<int> dp(target_sum + 1, 0);
+    dp[0] = 1; // 1 way to make sum 0 (throw nothing)
+    
+    // Time: O(N * 6) -> O(N)
+    for (int i = 1; i <= target_sum; ++i) {
+        for (int dice = 1; dice <= 6; ++dice) {
+            if (i - dice >= 0) {
+                dp[i] = (dp[i] + dp[i - dice]) % MOD;
+            }
+        }
+    }
+    return dp[target_sum];
+}
+
+int32_t main() {
+    int n; cin >> n;
+    cout << countDiceWays(n) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Minimizing Coins [CSES]}
+\textbf{Concept:} Find the minimum number of coins to make a target sum.
+\\
+\textbf{State:} \texttt{dp[i]} = minimum coins to make sum \texttt{i}.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+#define int long long
+
+int getMinCoins(int target, const vector<int>& coins) {
+    // Space: O(X) where X is target
+    vector<int> dp(target + 1, 1e9);
+    dp[0] = 0;
+    
+    // Time: O(N * X)
+    for (int i = 1; i <= target; ++i) {
+        for (int coin : coins) {
+            if (i - coin >= 0) {
+                dp[i] = min(dp[i], dp[i - coin] + 1);
+            }
+        }
+    }
+    return dp[target] == 1e9 ? -1 : dp[target];
+}
+
+int32_t main() {
+    int num_coins, target; 
+    cin >> num_coins >> target;
+    vector<int> coins(num_coins);
+    // Space: O(N)
+    for (int i = 0; i < num_coins; ++i) cin >> coins[i];
+    cout << getMinCoins(target, coins) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Coin Combinations I \& II [CSES]}
+\textbf{Concept:} 
+\textit{Coin Combinations I} cares about permutations (order matters).
+The outer loop is the target weight.
+\textit{Coin Combinations II} cares about combinations (order DOES NOT matter).
+The outer loop is the coins array.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define int long long
+const int MOD = 1e9 + 7;
+
+// --- COIN COMBINATIONS I (Permutations) ---
+int countPermutations(int target, const vector<int>& coins) {
+    vector<int> dp(target + 1, 0);
+    // Space: O(X)
+    dp[0] = 1;
+    // Time: O(X * N)
+    for (int weight = 1; weight <= target; ++weight) {
+        for (int coin : coins) {
+            if (weight - coin >= 0) dp[weight] = (dp[weight] + dp[weight - coin]) % MOD;
+        }
+    }
+    return dp[target];
+}
+
+// --- COIN COMBINATIONS II (Combinations) ---
+int countCombinations(int target, const vector<int>& coins) {
+    vector<int> dp(target + 1, 0);
+    // Space: O(X)
+    dp[0] = 1;
+    // Time: O(N * X) -> Notice the loops are swapped!
+    for (int coin : coins) {
+        for (int weight = 1; weight <= target; ++weight) {
+            if (weight - coin >= 0) dp[weight] = (dp[weight] + dp[weight - coin]) % MOD;
+        }
+    }
+    return dp[target];
+}
+\end{lstlisting}
+
+\subsection{Removing Digits [CSES]}
+\textbf{Concept:} Subtract the largest digit of a number until it becomes 0.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int getMinSteps(int n) {
+    // Space: O(N)
+    vector<int> dp(n + 1, 1e9);
+    dp[0] = 0;
+    
+    // Time: O(N * log10(N)) 
+    for (int i = 1; i <= n; ++i) {
+        int temp = i;
+        int max_digit = 0;
+        // Extract digits
+        while (temp > 0) {
+            max_digit = max(max_digit, temp % 10);
+            temp /= 10;
+        }
+        dp[i] = dp[i - max_digit] + 1;
+    }
+    return dp[n];
+}
+
+int main() {
+    int n; cin >> n;
+    cout << getMinSteps(n) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Problem B: Restaurant Orders [Kattis]}
+\textbf{Concept:} Unbounded Knapsack (Coin Change Combinations). We must track if a cost can be made in 0 ways, exactly 1 way, or $>1$ ways (Ambiguous).
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+void processOrders(int num_items, const vector<int>& costs, int num_orders, const vector<int>& queries) {
+    int max_order = 0;
+    for (int q : queries) max_order = max(max_order, q);
+    
+    // Space: O(M) where M is the max order cost (<= 30000)
+    // dp array tracks NUMBER of ways to make a cost.
+    // We cap it at 2 to prevent overflow.
+    vector<int> dp(max_order + 1, 0);
+    vector<int> first_item_used(max_order + 1, -1);
+    dp[0] = 1;
+    
+    // Time: O(N * M)
+    for (int i = 0; i < num_items; ++i) {
+        for (int w = costs[i]; w <= max_order; ++w) {
+            if (dp[w - costs[i]] > 0) {
+                dp[w] += dp[w - costs[i]];
+                if (dp[w] > 2) dp[w] = 2; // Cap at 2 (Ambiguous)
+                
+                // If it's the first way we've found to make 'w', record the item
+                if (first_item_used[w] == -1 || dp[w - costs[i]] == 1) {
+                    first_item_used[w] = i; 
+                }
+            }
+        }
+    }
+    
+    // Answer queries. Time: O(M) per query to backtrack
+    for (int target : queries) {
+        if (dp[target] == 0) {
+            cout << "Impossible\n";
+        } else if (dp[target] > 1) {
+            cout << "Ambiguous\n";
+        } else {
+            vector<int> receipt;
+            int curr = target;
+            while (curr > 0) {
+                int item_idx = first_item_used[curr];
+                receipt.push_back(item_idx + 1); // 1-based indexing
+                curr -= costs[item_idx];
+            }
+            for (int i = receipt.size() - 1; i >= 0; --i) {
+                cout << receipt[i] << " ";
+            }
+            cout << "\n";
+        }
+    }
+}
+\end{lstlisting}
+
+
+\section{Knapsack Variants}
+
+\subsection{0/1 Knapsack Problem}
+\textbf{Concept:} Maximize the value in a knapsack of limited capacity.
+You must take an item entirely or leave it (no fractions).
+\\
+\textbf{State:} \texttt{dp[i][w]} is the maximum value using a subset of the first \texttt{i} items with a weight capacity limit of \texttt{w}.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Item {
+    int value;
+    int weight;
+};
+
+int calculate01Knapsack(int max_capacity, const vector<Item>& items) {
+    int num_items = items.size();
+    // Space Complexity: O(N * W) where N is items, W is capacity
+    vector<vector<int>> dp(num_items + 1, vector<int>(max_capacity + 1, 0));
+    // Time Complexity: O(N * W)
+    for (int i = 1; i <= num_items; ++i) {
+        for (int w = 0; w <= max_capacity; ++w) {
+            
+            // Item's weight is based on 0-indexing
+            int current_weight = items[i - 1].weight;
+            int current_value = items[i - 1].value;
+            
+            if (current_weight <= w) {
+                // Choice: Max of (Leaving the item) OR (Taking the item + value of remaining capacity)
+                dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - current_weight] + current_value);
+            } else {
+                // Too heavy, we MUST leave it
+                dp[i][w] = dp[i - 1][w];
+            }
+        }
+    }
+    
+    return dp[num_items][max_capacity];
+}
+\end{lstlisting}
+
+\subsection{Book Shop [CSES]}
+\textbf{Concept:} Classic 0/1 Knapsack. \textit{CSES limits memory tightly, so a 1D Array is required, and} \texttt{int} \textit{must be 32-bit to avoid TLE/MLE.}
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int getMaxPages(int max_price, const vector<int>& prices, const vector<int>& pages) {
+    int num_books = prices.size();
+    // Space: O(X) where X is max_price. 1D Array to save memory!
+    vector<int> dp(max_price + 1, 0);
+    // Time: O(N * X)
+    for (int i = 0; i < num_books; ++i) {
+        // Must traverse backwards for 1D 0/1 Knapsack to avoid reusing the same item
+        for (int weight = max_price; weight >= prices[i]; --weight) {
+            dp[weight] = max(dp[weight], dp[weight - prices[i]] + pages[i]);
+        }
+    }
+    return dp[max_price];
+}
+
+int main() {
+    int num_books, max_price;
+    cin >> num_books >> max_price;
+    
+    vector<int> prices(num_books); // Space: O(N)
+    vector<int> pages(num_books);
+    // Space: O(N)
+    
+    for (int i = 0; i < num_books; ++i) cin >> prices[i];
+    for (int i = 0; i < num_books; ++i) cin >> pages[i];
+    
+    cout << getMaxPages(max_price, prices, pages) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Money Sums \& Two Sets II [CSES]}
+\textbf{Concept:} Subset Sum variants. \textit{Money Sums} finds all possible sums.
+\textit{Two Sets II} finds the number of ways to partition an array into two equal subsets.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define int long long
+const int MOD = 1e9 + 7;
+
+// --- MONEY SUMS ---
+void printPossibleSums(int num_coins, const vector<int>& coins) {
+    int max_possible_sum = 0;
+    for (int c : coins) max_possible_sum += c;
+    
+    // Space: O(Sum)
+    vector<bool> dp(max_possible_sum + 1, false);
+    dp[0] = true;
+    
+    // Time: O(N * Sum)
+    for (int coin : coins) {
+        for (int w = max_possible_sum; w >= coin; --w) {
+            if (dp[w - coin]) dp[w] = true;
+        }
+    }
+    
+    vector<int> valid_sums;
+    for (int i = 1; i <= max_possible_sum; ++i) {
+        if (dp[i]) valid_sums.push_back(i);
+    }
+    
+    cout << valid_sums.size() << "\n";
+    for (int sum : valid_sums) cout << sum << " ";
+    cout << "\n";
+}
+
+// --- TWO SETS II ---
+// Modular exponentiation for division under modulo
+int modInverse(int base, int exp) {
+    int res = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1) res = (res * base) % MOD;
+        base = (base * base) % MOD;
+        exp /= 2;
+    }
+    return res;
+}
+
+int countTwoSets(int n) {
+    int total_sum = n * (n + 1) / 2;
+    if (total_sum % 2 != 0) return 0; // Odd sum cannot be halved
+    
+    int target = total_sum / 2;
+    // Space: O(Target)
+    vector<int> dp(target + 1, 0);
+    dp[0] = 1;
+    // Time: O(N * Target)
+    for (int i = 1; i <= n; ++i) {
+        for (int w = target; w >= i; --w) {
+            dp[w] = (dp[w] + dp[w - i]) % MOD;
+        }
+    }
+    
+    // We calculated permutations counting both sets, must divide by 2
+    return (dp[target] * modInverse(2, MOD - 2)) % MOD;
+}
+\end{lstlisting}
+
+\subsection{Problem A: Knapsack [Kattis]}
+\textbf{Concept:} Classic 0/1 Knapsack, but requires reading until End of File (EOF) and backtracking the 2D DP matrix to print the indices of the chosen items.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Item {
+    int value;
+    int weight;
+    int original_index;
+};
+
+void solveKnapsack(int capacity, int num_items, const vector<Item>& items) {
+    // Space: O(N * C)
+    vector<vector<int>> dp(num_items + 1, vector<int>(capacity + 1, 0));
+    // Time: O(N * C)
+    for (int i = 1; i <= num_items; ++i) {
+        for (int w = 0; w <= capacity; ++w) {
+            int current_weight = items[i - 1].weight;
+            int current_value = items[i - 1].value;
+            
+            if (current_weight <= w) {
+                dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - current_weight] + current_value);
+            } else {
+                dp[i][w] = dp[i - 1][w];
+            }
+        }
+    }
+    
+    // Backtracking to find chosen items. Time: O(N)
+    vector<int> chosen_indices;
+    int current_capacity = capacity;
+    for (int i = num_items; i > 0; --i) {
+        // If value changed from the row above, we included this item
+        if (dp[i][current_capacity] != dp[i - 1][current_capacity]) {
+            chosen_indices.push_back(items[i - 1].original_index);
+            current_capacity -= items[i - 1].weight;
+        }
+    }
+    
+    cout << chosen_indices.size() << "\n";
+    for (int idx : chosen_indices) {
+        cout << idx << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    int capacity, num_items;
+    // Read until EOF
+    while (cin >> capacity >> num_items) {
+        vector<Item> items(num_items);
+        for (int i = 0; i < num_items; ++i) {
+            cin >> items[i].value >> items[i].weight;
+            items[i].original_index = i;
+        }
+        solveKnapsack(capacity, num_items, items);
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Problem C: Presidential Elections [Kattis]}
+\textbf{Concept:} Minimizing weight for a target value.
+Weight = "Voters needed to swing state", Value = "Electoral Delegates".
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+#define int long long
+
+struct State {
+    int delegates;
+    int required_voters_to_swing;
+};
+
+int32_t main() {
+    int num_states;
+    if (!(cin >> num_states)) return 0;
+    
+    vector<State> valid_states;
+    int total_delegates = 0;
+    int guaranteed_delegates = 0;
+    
+    for (int i = 0; i < num_states; ++i) {
+        int delegates, const_c, const_f, undecided;
+        cin >> delegates >> const_c >> const_f >> undecided;
+        total_delegates += delegates;
+        
+        int total_voters = const_c + const_f + undecided;
+        int votes_needed_to_win = (total_voters / 2) + 1;
+        
+        if (const_c >= votes_needed_to_win) {
+            guaranteed_delegates += delegates;
+            // Already won
+        } else {
+            int gap = votes_needed_to_win - const_c;
+            if (gap <= undecided) {
+                // Winnable state
+                valid_states.push_back({delegates, gap});
+            }
+        }
+    }
+    
+    int delegates_needed = (total_delegates / 2) + 1;
+    int missing_delegates = delegates_needed - guaranteed_delegates;
+    
+    if (missing_delegates <= 0) {
+        cout << 0 << "\n";
+        return 0;
+    }
+    
+    // dp[v] = min voters needed to get EXACTLY v delegates. Space: O(Total Delegates)
+    vector<int> dp(total_delegates + 1, 1e15);
+    // Use 1e15 for infinity
+    dp[0] = 0;
+    // Time: O(N * D) where D is total delegates (<= 2016)
+    for (const State& s : valid_states) {
+        for (int v = total_delegates; v >= s.delegates; --v) {
+            if (dp[v - s.delegates] != 1e15) {
+                dp[v] = min(dp[v], dp[v - s.delegates] + s.required_voters_to_swing);
+            }
+        }
+    }
+    
+    int min_total_voters = 1e15;
+    for (int v = missing_delegates; v <= total_delegates; ++v) {
+        min_total_voters = min(min_total_voters, dp[v]);
+    }
+    
+    if (min_total_voters == 1e15) cout << "impossible\n";
+    else cout << min_total_voters << "\n";
+    
+    return 0;
+}
+\end{lstlisting}
+
+
+\section{Jumps and Sequences 1D}
+
+\subsection{Maximum Weight Independent Set (MWIS) on a Path}
+\textbf{Concept:} Also known as the "House Robber" problem.
+Find the maximum subset sum of an array such that no two selected elements are adjacent.
+\\
+\textbf{State:} \texttt{dp[i]} represents the maximum weight independent set using a prefix of the first \texttt{i} elements.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int calculateMWIS(const vector<int>& weights) {
+    int num_elements = weights.size();
+    if (num_elements == 0) return 0;
+    if (num_elements == 1) return weights[0];
+    // Space Complexity: O(N) to store the DP table
+    // (Note: This can be optimized to O(1) by only tracking the last two values, 
+    // but O(N) is strictly required if you need to backtrack to find the chosen items later).
+    vector<int> dp(num_elements, 0);
+    
+    dp[0] = weights[0];
+    dp[1] = max(weights[0], weights[1]);
+    // Time Complexity: O(N) - Linear scan
+    for (int i = 2; i < num_elements; ++i) {
+        // Choice: Max of (Excluding the current element) OR (Including it + the max from i-2)
+        dp[i] = max(dp[i - 1], dp[i - 2] + weights[i]);
+    }
+    
+    return dp[num_elements - 1];
+}
+\end{lstlisting}
+
+\subsection{Frog 1: Jump 1 or 2 Stones}
+\textbf{Concept:} Find the minimum cost to reach the last stone.
+You can jump 1 or 2 steps. Cost is the absolute difference in height.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+#define int long long
+
+int getMinCostFrog1(int num_stones, const vector<int>& heights) {
+    if (num_stones == 1) return 0;
+    // Space: O(N)
+    vector<int> dp(num_stones, 1e9); 
+    
+    // Base cases
+    dp[0] = 0;
+    dp[1] = abs(heights[1] - heights[0]);
+    
+    // Time: O(N)
+    for (int i = 2; i < num_stones; ++i) {
+        int cost_from_prev1 = dp[i - 1] + abs(heights[i] - heights[i - 1]);
+        int cost_from_prev2 = dp[i - 2] + abs(heights[i] - heights[i - 2]);
+        
+        dp[i] = min(cost_from_prev1, cost_from_prev2);
+    }
+    
+    return dp[num_stones - 1];
+}
+\end{lstlisting}
+
+\subsection{Frog 2: Jump up to K Stones}
+\textbf{Concept:} A generalization of Frog 1. The frog can jump from any of the $K$ previous stones.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+#define int long long
+
+int getMinCostFrog2(int num_stones, int max_jump, const vector<int>& heights) {
+    // Space: O(N)
+    vector<int> dp(num_stones, 1e9);
+    dp[0] = 0;
+    
+    // Time: O(N * K)
+    for (int i = 1; i < num_stones; ++i) {
+        // Check all valid previous stones we could have jumped from
+        for (int jump = 1; jump <= max_jump; ++jump) {
+            if (i - jump >= 0) {
+                int current_cost = dp[i - jump] + abs(heights[i] - heights[i - jump]);
+                dp[i] = min(dp[i], current_cost);
+            }
+        }
+    }
+    
+    return dp[num_stones - 1];
+}
+\end{lstlisting}
+
+\subsection{Problem D: Spiderman's Workout [Kattis]}
+\textbf{Concept:} A 2D DP pathfinding problem.
+We must track the minimum *maximum height* reached, and strictly stay above height 0.
+
+\begin{lstlisting}
+#include <iostream>
+\include <vector>
+\include <string>
+\include <algorithm>
+
+using namespace std;
+
+void solveSpiderman(int num_distances, const vector<int>& distances) {
+    int max_possible_height = 1000;
+    // Sum of all distances is <= 1000
+    
+    // dp[i][h] = minimum max-height reached using first 'i' moves and ending at height 'h'
+    // Space: O(N * MaxSum)
+    vector<vector<int>> dp(num_distances + 1, vector<int>(max_possible_height + 1, 1e9));
+    vector<vector<char>> parent(num_distances + 1, vector<char>(max_possible_height + 1, ' '));
+    
+    dp[0][0] = 0;
+    // Time: O(N * MaxSum)
+    for (int i = 0; i < num_distances; ++i) {
+        int dist = distances[i];
+        for (int h = 0; h <= max_possible_height; ++h) {
+            if (dp[i][h] == 1e9) continue;
+            // Move UP
+            if (h + dist <= max_possible_height) {
+                int peak_if_up = max(dp[i][h], h + dist);
+                if (peak_if_up < dp[i + 1][h + dist]) {
+                    dp[i + 1][h + dist] = peak_if_up;
+                    parent[i + 1][h + dist] = 'U';
+                }
+            }
+            
+            // Move DOWN (Must not go below ground)
+            if (h - dist >= 0) {
+                int peak_if_down = dp[i][h];
+                // Going down doesn't increase max height
+                if (peak_if_down < dp[i + 1][h - dist]) {
+                    dp[i + 1][h - dist] = peak_if_down;
+                    parent[i + 1][h - dist] = 'D';
+                }
+            }
+        }
+    }
+    
+    // Must end exactly at ground level (0)
+    if (dp[num_distances][0] == 1e9) {
+        cout << "IMPOSSIBLE\n";
+        return;
+    }
+    
+    // Backtrack to get moves
+    string path = "";
+    int current_h = 0;
+    for (int i = num_distances; i > 0; --i) {
+        char move = parent[i][current_h];
+        path += move;
+        if (move == 'U') current_h -= distances[i - 1];
+        else current_h += distances[i - 1];
+    }
+    
+    reverse(path.begin(), path.end());
+    cout << path << "\n";
+}
+\end{lstlisting}
+
+
+\section{Grid, Matrices and Shapes}
+\subsection{Matrix Chain Multiplication (Interval DP)}
+\textbf{Concept:} Find the most efficient way to multiply a given sequence of matrices. 
+\textbf{State:} Unlike standard DP that iterates linearly, Interval DP iterates by the \textit{length of the interval} (\texttt{L}). \texttt{dp[i][j]} represents the minimum cost to multiply matrices from index \texttt{i} to \texttt{j}.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <climits>
+
+using namespace std;
+
+// dims array represents matrix dimensions. 
+// Matrix A[i] has dimensions dims[i-1] x dims[i]
+int matrixChainMultiplication(const vector<int>& dims) {
+    int num_matrices = dims.size() - 1; 
+    
+    // Space Complexity: O(N^2)
+    // dp[i][j] = min scalar multiplications to compute matrix A[i]...A[j]
+    vector<vector<int>> dp(num_matrices + 1, vector<int>(num_matrices + 1, 0));
+
+    // Time Complexity: O(N^3)
+    // Base case: L = 1 (single matrix) costs 0, already initialized.
+    
+    // L is the length of the interval (chain of matrices) we are evaluating
+    for (int L = 2; L <= num_matrices; ++L) {
+        for (int i = 1; i <= num_matrices - L + 1; ++i) {
+            int j = i + L - 1;
+            dp[i][j] = INT_MAX;
+
+            // Try every possible split point 'k' between i and j-1
+            for (int k = i; k < j; ++k) {
+                // Cost = Cost of Left Chain + Cost of Right Chain + Cost of multiplying them together
+                int current_cost = dp[i][k] + dp[k + 1][j] + (dims[i - 1] * dims[k] * dims[j]);
+                dp[i][j] = min(dp[i][j], current_cost);
+            }
+        }
+    }
+    
+    // Return the minimum cost to multiply the entire chain from 1 to N
+    return dp[1][num_matrices];
+}
+\end{lstlisting}
+
+\subsection{Grid Paths [CSES]}
+\textbf{Concept:} Count paths from top-left to bottom-right avoiding traps (\texttt{*}).
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+#define int long long
+const int MOD = 1e9 + 7;
+
+int countGridPaths(int n, const vector<string>& grid) {
+    if (grid[0][0] == '*' || grid[n-1][n-1] == '*') return 0;
+    // Space: O(N^2)
+    vector<vector<int>> dp(n, vector<int>(n, 0));
+    dp[0][0] = 1;
+    // Time: O(N^2)
+    for (int row = 0; row < n; ++row) {
+        for (int col = 0; col < n; ++col) {
+            if (grid[row][col] == '*') continue;
+            if (row > 0) dp[row][col] = (dp[row][col] + dp[row - 1][col]) % MOD;
+            if (col > 0) dp[row][col] = (dp[row][col] + dp[row][col - 1]) % MOD;
+        }
+    }
+    return dp[n-1][n-1];
+}
+
+int32_t main() {
+    int n;
+    cin >> n;
+    vector<string> grid(n); // Space: O(N^2)
+    for (int i = 0; i < n; ++i) cin >> grid[i];
+    cout << countGridPaths(n, grid) << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Rectangle Cutting [CSES]}
+\textbf{Concept:} Split a WxH rectangle into squares.
+Try all horizontal and vertical cuts.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int getMinCuts(int width, int height) {
+    // Space: O(W * H)
+    vector<vector<int>> dp(width + 1, vector<int>(height + 1, 1e9));
+    // Time: O(W * H * (W + H))
+    for (int w = 1; w <= width; ++w) {
+        for (int h = 1; h <= height; ++h) {
+            if (w == h) {
+                dp[w][h] = 0;
+                // Already a square
+                continue;
+            }
+            // Vertical cuts
+            for (int cut = 1; cut < w; ++cut) {
+                dp[w][h] = min(dp[w][h], dp[cut][h] + dp[w - cut][h] + 1);
+            }
+            // Horizontal cuts
+            for (int cut = 1; cut < h; ++cut) {
+                dp[w][h] = min(dp[w][h], dp[w][cut] + dp[w][h - cut] + 1);
+            }
+        }
+    }
+    return dp[width][height];
+}
+\end{lstlisting}
+
+\subsection{Minimum Sum in a Triangle}
+\textbf{Concept:} Move from top to bottom.
+Optimized by going bottom-up, reducing space to 1D.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int getMinTrianglePath(const vector<vector<int>>& triangle) {
+    int rows = triangle.size();
+    if (rows == 0) return 0;
+    // Space: O(N) where N is the number of rows
+    // Initialize the dp array with the bottom row of the triangle
+    vector<int> dp = triangle[rows - 1];
+    // Time: O(N^2)
+    // Work upwards from the second-to-last row
+    for (int r = rows - 2; r >= 0; --r) {
+        for (int c = 0; c <= r; ++c) {
+            // Path cost = Current cell + min of the two cells directly below it
+            dp[c] = triangle[r][c] + min(dp[c], dp[c + 1]);
+        }
+    }
+    
+    return dp[0];
+    // The top element now holds the minimum path sum
+}
+\end{lstlisting}
+
+\subsection{Maximal Square (All 1s)}
+\textbf{Concept:} Find the largest square sub-matrix containing only 1s.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int getMaximumSquareArea(const vector<vector<int>>& matrix) {
+    if (matrix.empty()) return 0;
+    int rows = matrix.size();
+    int cols = matrix[0].size();
+    int max_side = 0;
+    // Space: O(R * C)
+    vector<vector<int>> dp(rows + 1, vector<int>(cols + 1, 0));
+    // Time: O(R * C)
+    for (int i = 1; i <= rows; ++i) {
+        for (int j = 1; j <= cols; ++j) {
+            // Assuming the matrix contains integers 0 or 1
+            if (matrix[i - 1][j - 1] == 1) {
+                // The size of the square ending at this cell is constrained by 
+                // the smallest square above it, left of it, and top-left of it.
+                dp[i][j] = min({dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]}) + 1;
+                max_side = max(max_side, dp[i][j]);
+            }
+        }
+    }
+    return max_side * max_side;
+}
+\end{lstlisting}
+
+
+\section{Subsequences and Strings}
+
+\subsection{Increasing Subsequence [CSES]}
+\textbf{Concept:} Classic Longest Increasing Subsequence (LIS). Solved in $O(N \log N)$ using \texttt{std::lower\_bound} rather than $O(N^2)$ DP array.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int getLISLength(int n, const vector<int>& arr) {
+    // Space: O(N)
+    vector<int> lis_tails;
+    // Time: O(N log N)
+    for (int i = 0; i < n; ++i) {
+        auto it = lower_bound(lis_tails.begin(), lis_tails.end(), arr[i]);
+        if (it == lis_tails.end()) {
+            lis_tails.push_back(arr[i]);
+            // Extend the subsequence
+        } else {
+            *it = arr[i];
+            // Replace to maintain smallest possible tail
+        }
+    }
+    return lis_tails.size();
+}
+\end{lstlisting}
+
+\subsection{Problem E: Increasing Subsequence [Kattis]}
+\textbf{Concept:} The problem specifically asks for the \textit{lexicographically smallest} sequence in the case of a tie.
+Because $N \le 200$, we can use an $O(N^2)$ approach and trace backward carefully.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+void printLexicographicallySmallestLIS(int n, const vector<int>& arr) {
+    // dp[i] = length of LIS starting at index i. Space: O(N)
+    vector<int> dp(n, 1);
+    vector<int> next_index(n, -1);
+    
+    int max_length = 0;
+    
+    // Time: O(N^2). We iterate backwards to easily find the first lexicographical match.
+    for (int i = n - 1; i >= 0; --i) {
+        int best_next = -1;
+        for (int j = i + 1; j < n; ++j) {
+            if (arr[j] > arr[i]) {
+                // If it creates a longer sequence, OR it ties but the element is smaller
+                if (dp[j] + 1 > dp[i] || (dp[j] + 1 == dp[i] && arr[j] < arr[best_next])) {
+                    dp[i] = dp[j] + 1;
+                    best_next = j;
+                }
+            }
+        }
+        next_index[i] = best_next;
+        max_length = max(max_length, dp[i]);
+    }
+    
+    // Find the best starting element
+    int current_index = -1;
+    for (int i = 0; i < n; ++i) {
+        if (dp[i] == max_length) {
+            if (current_index == -1 || arr[i] < arr[current_index]) {
+                current_index = i;
+            }
+        }
+    }
+    
+    cout << max_length << " ";
+    while (current_index != -1) {
+        cout << arr[current_index] << " ";
+        current_index = next_index[current_index];
+    }
+    cout << "\n";
+}
+\end{lstlisting}
+
+\subsection{Longest Common Subsequence (LCS)}
+\textbf{Concept:} Find the longest sequence of characters that appear in both strings in the same order.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+int getLCS(const string& text1, const string& text2) {
+    int len1 = text1.length();
+    int len2 = text2.length();
+    
+    // Space: O(N * M)
+    vector<vector<int>> dp(len1 + 1, vector<int>(len2 + 1, 0));
+    // Time: O(N * M)
+    for (int i = 1; i <= len1; ++i) {
+        for (int j = 1; j <= len2; ++j) {
+            if (text1[i - 1] == text2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+                // Characters match
+            } else {
+                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+                // Skip one character
+            }
+        }
+    }
+    return dp[len1][len2];
+}
+\end{lstlisting}
+
+\subsection{Word Break Problem}
+\textbf{Concept:} Can a string be fully segmented into dictionary words?
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <string>
+#include <unordered_set>
+
+using namespace std;
+
+bool canBreakWord(const string& target, const vector<string>& word_dict) {
+    unordered_set<string> dict(word_dict.begin(), word_dict.end());
+    int length = target.length();
+    // Space: O(N) - dp[i] is true if the prefix of length 'i' can be segmented
+    vector<bool> dp(length + 1, false);
+    dp[0] = true; // Empty string is always valid
+    
+    // Time: O(N^2) (Assuming substring extraction is O(1) conceptually, O(N^3) in strict C++)
+    for (int i = 1; i <= length; ++i) {
+        for (int j = 0; j < i; ++j) {
+            // If the prefix up to 'j' is valid, and the rest [j..i] is in the dictionary
+            if (dp[j] && dict.count(target.substr(j, i - j))) {
+                dp[i] = true;
+                break; // No need to check other splits for this 'i'
+            }
+        }
+    }
+    return dp[length];
+}
+\end{lstlisting}
+
+
+\section{Graphs and Short Path [DP]}
+
+\subsection{Bellman-Ford Algorithm}
+\textbf{Concept:} A graph DP algorithm to find the shortest path from a single source to all vertices.
+Unlike Dijkstra, it correctly handles negative edge weights and detects negative weight cycles.
+\\
+\textbf{State:} After the $k$-th iteration, the distance array contains the shortest path using at most $k$ edges.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <climits>
+
+using namespace std;
+
+struct Edge {
+    int source;
+    int destination;
+    int weight;
+};
+
+// Returns an empty vector if a negative cycle is detected
+vector<long long> bellmanFord(int num_vertices, int source_vertex, const vector<Edge>& edges) {
+    // Space Complexity: O(V)
+    // Use long long to prevent overflow when adding to INT_MAX
+    vector<long long> distances(num_vertices, INT_MAX);
+    distances[source_vertex] = 0;
+    
+    // Time Complexity: O(V * E) - Relax all edges V - 1 times
+    for (int i = 0; i < num_vertices - 1; ++i) {
+        bool any_updated = false;
+        for (const Edge& edge : edges) {
+            if (distances[edge.source] != INT_MAX && 
+                distances[edge.source] + edge.weight < distances[edge.destination]) {
+                
+                distances[edge.destination] = distances[edge.source] + edge.weight;
+                any_updated = true;
+            }
+        }
+        // Early stopping optimization: if no distances changed, we are done
+        if (!any_updated) break;
+    }
+    
+    // Time Complexity: O(E) to check for negative cycles
+    // If we can STILL relax an edge after V-1 passes, a negative cycle exists.
+    for (const Edge& edge : edges) {
+        if (distances[edge.source] != INT_MAX && 
+            distances[edge.source] + edge.weight < distances[edge.destination]) {
+            // Negative cycle detected!
+            return {}; 
+        }
+    }
+    
+    return distances;
+}
+\end{lstlisting}
+
+\subsection{Problem F \& G: Bellman-Ford with Negative Cycles [Kattis]}
+\textbf{Concept:} \textit{Haunted Graveyard} and \textit{Single Source Shortest Path} are both fundamentally testing your ability to deploy Bellman-Ford and correctly identify nodes trapped in negative cycles.
+The template below handles the complete requirement: finding shortest paths, detecting negative cycles, and safely marking \textit{every node reachable} from that negative cycle as $-\infty$.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define int long long
+
+struct Edge {
+    int u, v, weight;
+};
+
+void solveBellmanFordNegativeCycles(int num_vertices, int num_edges, int source, int num_queries) {
+    vector<Edge> edges(num_edges);
+    for (int i = 0; i < num_edges; ++i) {
+        cin >> edges[i].u >> edges[i].v >> edges[i].weight;
+    }
+    
+    // Space: O(V)
+    vector<int> distances(num_vertices, 1e15);
+    // 1e15 represents Infinity
+    distances[source] = 0;
+    
+    // Step 1: Relax edges V-1 times. Time: O(V * E)
+    for (int i = 0; i < num_vertices - 1; ++i) {
+        for (const Edge& e : edges) {
+            if (distances[e.u] != 1e15 && distances[e.u] + e.weight < distances[e.v]) {
+                distances[e.v] = distances[e.u] + e.weight;
+            }
+        }
+    }
+    
+    // Step 2: Propagate Negative Infinity. Run V-1 more times. 
+    // If a node can STILL be relaxed, it is part of, or reachable from, a negative weight cycle.
+    // Time: O(V * E)
+    for (int i = 0; i < num_vertices - 1; ++i) {
+        for (const Edge& e : edges) {
+            if (distances[e.u] != 1e15 && distances[e.u] + e.weight < distances[e.v]) {
+                distances[e.v] = -1e15; // Mark as -Infinity
+            }
+        }
+    }
+    
+    // Answer queries
+    for (int q = 0; q < num_queries; ++q) {
+        int destination;
+        cin >> destination;
+        
+        if (distances[destination] == 1e15) {
+            cout << "Impossible\n";
+        } else if (distances[destination] == -1e15) {
+            cout << "-Infinity\n";
+        } else {
+            cout << distances[destination] << "\n";
+        }
+    }
+}
+\end{lstlisting}
+
+\subsection{Floyd-Warshall (All-Pairs Shortest Path)}
+\textbf{Concept:} A $O(V^3)$ DP that finds the shortest distance between \textit{every} pair of vertices in a graph.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+void runFloydWarshall(vector<vector<int>>& distance_matrix) {
+    int num_vertices = distance_matrix.size();
+    
+    // Time: O(V^3). The core DP logic is incredibly simple but computationally heavy.
+    // 'k' represents the intermediate vertex we are trying to route through.
+    for (int k = 0; k < num_vertices; ++k) {
+        for (int i = 0; i < num_vertices; ++i) {
+            for (int j = 0; j < num_vertices; ++j) {
+                // If vertex 'k' is reachable from 'i' and 'j' is reachable from 'k'
+                if (distance_matrix[i][k] != 1e9 && distance_matrix[k][j] != 1e9) {
+                    // Update shortest path from 'i' to 'j'
+                    distance_matrix[i][j] = min(
+                        distance_matrix[i][j], 
+                        distance_matrix[i][k] + distance_matrix[k][j]
+                    );
+                }
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+
+\section{Mathematics and State Machines}
+
+\subsection{Array Description [CSES]}
+\textbf{State:} \texttt{dp[i][v]} = ways to fill prefix \texttt{i} such that the last element is \texttt{v}.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define int long long
+const int MOD = 1e9 + 7;
+
+int countValidArrays(int n, int max_val, const vector<int>& arr) {
+    // Space: O(N * M)
+    vector<vector<int>> dp(n, vector<int>(max_val + 2, 0));
+    // Base case for first element
+    if (arr[0] != 0) {
+        dp[0][arr[0]] = 1;
+    } else {
+        for (int v = 1; v <= max_val; ++v) dp[0][v] = 1;
+    }
+    
+    // Time: O(N * M)
+    for (int i = 1; i < n; ++i) {
+        if (arr[i] != 0) {
+            int v = arr[i];
+            dp[i][v] = (dp[i-1][v-1] + dp[i-1][v] + dp[i-1][v+1]) % MOD;
+        } else {
+            for (int v = 1; v <= max_val; ++v) {
+                dp[i][v] = (dp[i-1][v-1] + dp[i-1][v] + dp[i-1][v+1]) % MOD;
+            }
+        }
+    }
+    
+    int total_ways = 0;
+    for (int v = 1; v <= max_val; ++v) {
+        total_ways = (total_ways + dp[n-1][v]) % MOD;
+    }
+    return total_ways;
+}
+\end{lstlisting}
+
+\subsection{Removal Game [CSES]}
+\textbf{Concept:} Minimax DP. Players take from ends. We track the \textit{difference} (Player 1 Score - Player 2 Score).
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+#define int long long
+
+int getPlayerOneMaxScore(int n, const vector<int>& arr) {
+    int total_sum = 0;
+    for (int x : arr) total_sum += x;
+    
+    // Space: O(N^2)
+    vector<vector<int>> dp(n, vector<int>(n, 0));
+    for (int i = 0; i < n; ++i) dp[i][i] = arr[i];
+    // Time: O(N^2)
+    for (int len = 2; len <= n; ++len) {
+        for (int left = 0; left <= n - len; ++left) {
+            int right = left + len - 1;
+            // Maximize my score minus the opponent's best response
+            dp[left][right] = max(arr[left] - dp[left + 1][right], 
+                                  arr[right] - dp[left][right - 1]);
+        }
+    }
+    
+    // Player 1 score is (Total Sum + Difference) / 2
+    return (total_sum + dp[0][n - 1]) / 2;
+}
+\end{lstlisting}
+
+\subsection{Catalan Numbers (BSTs, Parentheses, Triangulations)}
+\textbf{Concept:} The $n$-th Catalan number counts many structural combinations, such as the number of unique BSTs you can make with $n$ nodes.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define int long long
+
+int getCatalanNumber(int n) {
+    if (n <= 1) return 1;
+    // Space: O(N)
+    vector<int> dp(n + 1, 0);
+    dp[0] = 1;
+    dp[1] = 1;
+    // Time: O(N^2)
+    for (int i = 2; i <= n; ++i) {
+        for (int j = 0; j < i; ++j) {
+            dp[i] += dp[j] * dp[i - j - 1];
+        }
+    }
+    return dp[n];
+}
+\end{lstlisting}
+
+\subsection{Count Derangements}
+\textbf{Concept:} Permutations where no element remains in its original position.
+\\
+\textbf{State Transition:} Item $i$ can swap with any of the $(i-1)$ previous items. 
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define int long long
+const int MOD = 1e9 + 7;
+
+int countDerangements(int n) {
+    if (n == 1) return 0;
+    if (n == 2) return 1;
+    // Space: O(1) - Only need the last two states
+    int prev2 = 0;
+    int prev1 = 1;
+    
+    // Time: O(N)
+    for (int i = 3; i <= n; ++i) {
+        int current = (i - 1) * (prev1 + prev2) % MOD;
+        prev2 = prev1;
+        prev1 = current;
+    }
+    return prev1;
+}
+\end{lstlisting}
+
+\subsection{Binomial Coefficient (Pascal's Triangle 1D)}
+\textbf{Concept:} Compute $\binom{n}{k}$ efficiently using $O(K)$ space instead of an $O(N \times K)$ matrix.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define int long long
+
+int getBinomialCoefficient(int n, int k) {
+    if (k > n) return 0;
+    if (k == 0 || k == n) return 1;
+    // Optimize: nCr(n, k) == nCr(n, n - k)
+    if (k > n - k) k = n - k;
+    // Space: O(K)
+    vector<int> dp(k + 1, 0);
+    dp[0] = 1;
+    // Time: O(N * K)
+    for (int i = 1; i <= n; ++i) {
+        // Traverse backwards to avoid overwriting values needed for current row
+        for (int j = min(i, k); j > 0; --j) {
+            dp[j] = dp[j] + dp[j - 1];
+        }
+    }
+    return dp[k];
+}
+\end{lstlisting}
+
+\subsection{Decode Ways}
+\textbf{Concept:} Count ways to decode a string of digits where A=1, B=2 ... Z=26.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+int numDecodings(const string& digits) {
+    if (digits.empty() || digits[0] == '0') return 0;
+    int length = digits.length();
+    // Space: O(N)
+    vector<int> dp(length + 1, 0);
+    
+    dp[0] = 1; // Empty string is 1 valid sequence
+    dp[1] = 1;
+    // Time: O(N)
+    for (int i = 2; i <= length; ++i) {
+        // Check single digit (1-9)
+        int one_digit = stoi(digits.substr(i - 1, 1));
+        if (one_digit >= 1 && one_digit <= 9) {
+            dp[i] += dp[i - 1];
+        }
+        
+        // Check two digits (10-26)
+        int two_digits = stoi(digits.substr(i - 2, 2));
+        if (two_digits >= 10 && two_digits <= 26) {
+            dp[i] += dp[i - 2];
+        }
+    }
+    return dp[length];
+}
+\end{lstlisting}
+
+
+\section{Advanced Topics (Bitmask and Intervals)}
+
+\subsection{Projects (Weighted Interval Scheduling) [CSES]}
+\textbf{Concept:} Sort jobs by end time.
+Use binary search (\texttt{lower\_bound}) to find the latest non-overlapping project.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+#define int long long
+
+struct Project {
+    int start, end, reward;
+};
+
+bool compareProjects(const Project& a, const Project& b) {
+    return a.end < b.end;
+}
+
+int getMaxReward(int n, vector<Project>& projects) {
+    // Time: O(N log N)
+    sort(projects.begin(), projects.end(), compareProjects);
+    // Space: O(N)
+    vector<int> dp(n, 0);
+    vector<int> end_times(n);
+    for (int i = 0; i < n; ++i) end_times[i] = projects[i].end;
+    
+    dp[0] = projects[0].reward;
+    // Time: O(N log N)
+    for (int i = 1; i < n; ++i) {
+        int include_reward = projects[i].reward;
+        // Find the last project that ended before the current one started
+        auto it = lower_bound(end_times.begin(), end_times.end(), projects[i].start);
+        if (it != end_times.begin()) {
+            --it;
+            int last_valid_idx = distance(end_times.begin(), it);
+            include_reward += dp[last_valid_idx];
+        }
+        
+        dp[i] = max(dp[i - 1], include_reward);
+    }
+    return dp[n - 1];
+}
+\end{lstlisting}
+
+\subsection{Elevator Rides (Bitmask DP) [CSES]}
+\textbf{Concept:} Minimize elevator trips for $N$ people ($N \le 20$).
+We use a bitmask where the $i$-th bit represents whether person $i$ is in the elevator.
+\\
+\textbf{State:} \texttt{dp[mask]} = \{minimum rides, weight of current ride\}
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+#define int long long
+
+struct State {
+    int rides;
+    int current_weight;
+};
+
+int getMinElevatorRides(int n, int max_weight, const vector<int>& weights) {
+    int max_mask = (1 << n);
+    // Space: O(2^N)
+    vector<State> dp(max_mask, {25, 0});
+    // 25 is safe infinity for N=20
+    
+    dp[0] = {1, 0};
+    // Time: O(N * 2^N)
+    for (int mask = 1; mask < max_mask; ++mask) {
+        for (int i = 0; i < n; ++i) {
+            // If the i-th person is in this subset (mask)
+            if (mask & (1 << i)) {
+                int previous_mask = mask ^ (1 << i);
+                State prev_state = dp[previous_mask];
+                
+                State new_state;
+                if (prev_state.current_weight + weights[i] <= max_weight) {
+                    // Add person to the current ride
+                    new_state = {prev_state.rides, prev_state.current_weight + weights[i]};
+                } else {
+                    // Requires a new ride
+                    new_state = {prev_state.rides + 1, weights[i]};
+                }
+                
+                // Keep the state with fewer rides, or less weight on the current ride
+                if (new_state.rides < dp[mask].rides || 
+                   (new_state.rides == dp[mask].rides && new_state.current_weight < dp[mask].current_weight)) {
+                    dp[mask] = new_state;
+                }
+            }
+        }
+    }
+    return dp[max_mask - 1].rides;
+}
+\end{lstlisting}

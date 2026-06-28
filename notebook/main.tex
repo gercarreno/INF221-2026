@@ -1,0 +1,32 @@
+\documentclass[10pt, a4paper, landscape]{article}
+
+% Importar toda la configuración
+\input{preamble.tex}
+
+\begin{document}
+
+\begin{center}
+    {\Large \textbf{Algorithms Cheat Sheet}} \\
+    \vspace{0.1cm}
+    \small Last Update: \today
+\end{center}
+
+\vspace{-0.3cm}
+
+\begin{multicols*}{2}
+\tableofcontents
+\end{multicols*}
+
+\newpage
+
+\begin{multicols*}{2}
+\input{sections/introduction.tex}
+\input{sections/useful.tex}
+\input{sections/backtracking.tex}
+\input{sections/greedy.tex}
+\input{sections/dynamic_programming.tex}
+
+
+
+\end{multicols*}
+\end{document}

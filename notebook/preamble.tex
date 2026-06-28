@@ -1,0 +1,73 @@
+\usepackage[utf8]{inputenc}
+\usepackage[hidelinks]{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage[margin=0.8cm, top=1.5cm, headheight=15pt, headsep=0.3cm]{geometry}
+\usepackage{verbatim}
+\usepackage{multicol}
+\usepackage{lastpage}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{amsmath, amssymb}
+\usepackage{tocloft}
+\usepackage{titlesec} 
+\usepackage{zi4}
+
+
+\definecolor{comp_keyword}{rgb}{0.0, 0.0, 0.8}
+\definecolor{comp_comment}{rgb}{0.0, 0.5, 0.0}
+\definecolor{comp_string}{rgb}{0.6, 0.1, 0.1}
+\definecolor{comp_bg}{rgb}{0.98, 0.98, 0.98}
+
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{comp_keyword}\bfseries,
+    stringstyle=\color{comp_string},
+    commentstyle=\color{comp_comment},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,     
+    frame=tb,           
+    aboveskip=2mm,      
+    belowskip=2mm,      
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    xleftmargin=10pt   
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textbf{Página \thepage\ de \pageref{LastPage}}}
+\lhead{\textbf{GC}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.0pt}
+
+
+
+
+\setlist{nosep}
+
+\setlength{\columnsep}{0.5cm}
+\setlength{\columnseprule}{0.4pt} 
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{2ex plus 1ex minus .2ex}{1ex plus .2ex}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{1.5ex plus 1ex minus .2ex}{0.5ex plus .2ex}
+
+
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\setcounter{tocdepth}{2}
+
+\hypersetup{
+    colorlinks=false,
+    pdfborder={0 0 0},
+    bookmarksnumbered=true,
+    bookmarksopen=true
+}

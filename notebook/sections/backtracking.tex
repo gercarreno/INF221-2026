@@ -1,0 +1,216 @@
+\section{Backtracking, Pruning \& Branch and Bound}
+
+\subsection{Core Concept: The Backtracking Skeleton}
+Backtracking builds a solution step-by-step. We usually use a \texttt{std::vector} to represent our current path. We \texttt{push\_back} a choice to move forward, recurse, and then \texttt{pop\_back} to undo that choice and try the next one.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+// A global or passed-by-reference vector to store all valid results
+vector<vector<int>> all_valid_solutions;
+
+// --- PRACTICAL BACKTRACKING SKELETON ---
+
+void backtrack(int current_step, int target_length, vector<int>& current_path) {
+    // 1. BASE CASE: Have we reached the required length or final state?
+    if (current_step == target_length) {
+        // Save a copy of the successful path
+        all_valid_solutions.push_back(current_path);
+        return;
+    }
+    
+    // 2. ITERATE CHOICES: Loop through all possible options for the current step
+    int num_possible_choices = 10; // Example: numbers 0 through 9
+    for (int choice = 0; choice < num_possible_choices; ++choice) {
+        
+        // 3. PRUNING: Is this choice legally allowed based on the problem rules?
+        // (e.g., "Has this number already been used?" or "Is this space safe?")
+        bool is_valid = true; /* Replace with actual condition */
+        
+        if (is_valid) {
+            
+            // 4. DO: Add the choice to our path
+            current_path.push_back(choice);
+            
+            // 5. RECURSE: Move to the next step
+            backtrack(current_step + 1, target_length, current_path);
+            
+            // 6. UNDO (Backtrack): Remove the choice so the loop can try the next one
+            current_path.pop_back();
+        }
+    }
+}
+
+int main() {
+    vector<int> starting_path;
+    int target_solution_length = 5;
+    
+    // Start at step 0 with an empty path
+    backtrack(0, target_solution_length, starting_path);
+    
+    return 0;
+}
+\end{lstlisting}
+
+
+\subsection{Branch and Bound \& Pruning: Traveling Salesperson Problem (TSP)}
+\textbf{The Problem:} Find the shortest possible route that visits every city exactly once and returns to the origin city.
+\\
+\textbf{Pruning:} We do not visit a city if it has already been visited.
+\\
+\textbf{Branch \& Bound:} If the cost of our current incomplete path is already greater than or equal to the best complete path we've found so far, we stop searching this branch.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+#include <climits>
+
+using namespace std;
+
+// Time Complexity: Worst case O(N!) without Branch and Bound.
+// With Branch and Bound, the time is drastically reduced but strictly remains O(N!) upper bound.
+void solveTravelingSalesperson(
+    int current_city, 
+    int cities_visited, 
+    int current_cost, 
+    vector<bool>& has_visited, 
+    const vector<vector<int>>& distance_matrix, 
+    int& best_possible_cost) 
+{
+    int total_cities = distance_matrix.size();
+    
+    // --- BRANCH AND BOUND ---
+    // If our current path is already more expensive than a full path we 
+    // found earlier, there is no point in continuing. Abandon this branch.
+    if (current_cost >= best_possible_cost) {
+        return;
+    }
+
+    // --- BASE CASE ---
+    // We have visited every city exactly once.
+    if (cities_visited == total_cities) {
+        // Add the distance to return to the starting city (city 0)
+        int cost_to_return = distance_matrix[current_city][0];
+        int final_path_cost = current_cost + cost_to_return;
+        
+        // We already checked current_cost < best_possible_cost, but the 
+        // return trip might push it over. Check one last time.
+        if (final_path_cost < best_possible_cost) {
+            best_possible_cost = final_path_cost;
+        }
+        return;
+    }
+
+    // --- RECURSIVE STEP ---
+    // Try visiting every other city from the current city
+    for (int next_city = 0; next_city < total_cities; ++next_city) {
+        
+        // --- PRUNING ---
+        // Only proceed if we haven't visited this city yet, and a path actually exists
+        if (!has_visited[next_city] && distance_matrix[current_city][next_city] > 0) {
+            
+            // 1. DO (Make the choice)
+            has_visited[next_city] = true;
+            
+            // 2. RECURSE (Move forward)
+            solveTravelingSalesperson(
+                next_city, 
+                cities_visited + 1, 
+                current_cost + distance_matrix[current_city][next_city], 
+                has_visited, 
+                distance_matrix, 
+                best_possible_cost
+            );
+            
+            // 3. UNDO (Backtrack to try the next loop iteration)
+            has_visited[next_city] = false;
+        }
+    }
+}
+
+int main() {
+    int num_cities;
+    cin >> num_cities;
+    
+    // Space Complexity: O(N^2) for the distance matrix
+    vector<vector<int>> distance_matrix(num_cities, vector<int>(num_cities));
+    for (int i = 0; i < num_cities; ++i) {
+        for (int j = 0; j < num_cities; ++j) {
+            cin >> distance_matrix[i][j];
+        }
+    }
+    
+    // Space Complexity: O(N) for visited tracking
+    vector<bool> has_visited(num_cities, false);
+    int best_possible_cost = INT_MAX;
+    
+    // Start at city 0
+    has_visited[0] = true;
+    
+    // Initial call: Start at city 0, 1 city visited, 0 initial cost
+    // Space Complexity: O(N) max recursion depth for the call stack
+    solveTravelingSalesperson(0, 1, 0, has_visited, distance_matrix, best_possible_cost);
+    
+    cout << best_possible_cost << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{N-Queens Problem}
+\textbf{Concept:} Place $N$ queens on an $N \times N$ chessboard so that no two queens attack each other. 
+\textbf{Pruning:} Instead of checking the whole board, we use boolean arrays to instantly check if a column or diagonal is already under attack.
+
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int total_n_queens_solutions = 0;
+
+// Time Complexity: O(N!) in the worst case, but heavily pruned.
+// Space Complexity: O(N) for the recursion stack and tracking arrays.
+void solveNQueens(int row, int n, vector<bool>& col, vector<bool>& diag1, vector<bool>& diag2) {
+    // 1. BASE CASE: If we successfully placed a queen in all rows, we found a solution.
+    if (row == n) {
+        total_n_queens_solutions++;
+        return;
+    }
+    
+    // 2. ITERATE CHOICES: Try placing a queen in every column of the current row.
+    for (int c = 0; c < n; ++c) {
+        // 3. PRUNING: Check if this column or either diagonal is already occupied.
+        // diag1 goes from top-left to bottom-right (constant row - col)
+        // diag2 goes from bottom-left to top-right (constant row + col)
+        if (col[c] || diag1[row - c + n - 1] || diag2[row + c]) {
+            continue; 
+        }
+
+        // 4. DO: Place the queen and mark the column/diagonals as attacked.
+        col[c] = diag1[row - c + n - 1] = diag2[row + c] = true;
+        
+        // 5. RECURSE: Move to the next row.
+        solveNQueens(row + 1, n, col, diag1, diag2);
+        
+        // 6. UNDO: Remove the queen to backtrack and try the next column.
+        col[c] = diag1[row - c + n - 1] = diag2[row + c] = false;
+    }
+}
+
+int main() {
+    int n;
+    cin >> n;
+    
+    vector<bool> col(n, false);
+    vector<bool> diag1(2 * n - 1, false);
+    vector<bool> diag2(2 * n - 1, false);
+    
+    solveNQueens(0, n, col, diag1, diag2);
+    cout << total_n_queens_solutions << "\n";
+    
+    return 0;
+}
+\end{lstlisting}
